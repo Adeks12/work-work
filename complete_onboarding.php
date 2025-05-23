@@ -27,9 +27,13 @@ if (!isset($_SESSION['username_sess'])) {
 
     if (isset($_POST['fetch_lga']) && isset($_POST['state_id'])) {
     $state_id = $_POST['state_id'];
-    $query = "SELECT lga, id FROM lga WHERE stateid = '$state_id' ORDER BY lga";
+    // Fetch LGAs based on the selected state
+    $query = "SELECT Lga FROM lga WHERE stateid = '$state_id' ORDER BY lga";
+    
     $lgas = $dbobject->db_query($query);
-    echo json_encode($lgas);
+// Return the result as JSON
+    $lgas1 = json_encode($lgas);
+echo $lgas1;
     exit;
     } 
     // Important: prevents the rest of the page from loading }
