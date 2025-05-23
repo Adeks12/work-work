@@ -1,0 +1,1 @@
+insert into userdata (role_id,email,password,passchg_logon,user_disabled,user_locked,created,merchant_id,username,verification_status) VALUES ('002','Jesuslovestestimony@gmail.com','0x7afd0351df5d2ba1','0','0','0','2025-05-23 13:19:54','PRO-431373','Jesuslovestestimony@gmail.com','verified')
