@@ -651,7 +651,297 @@ class Users extends dbobject
     $name = substr($email, 0, $atPos);
     $domain = substr($email, $atPos);
     if (strlen($name) <= 2) { $masked=substr($name, 0, 1) . str_repeat('*', max(0, strlen($name)-1)); } else {
-        $masked=substr($name, 0, 3) . str_repeat('*', max(0, strlen($name)-3)); } return $masked . $domain; }
+        $masked=substr($name, 0, 3) . str_repeat('*', max(0, strlen($name)-3)); } return $masked . $domain;
+     
+    }
+
+    public function complete_registration($data)
+    {
+        $username = $data['username'] ?? '';
+    try {
+    // Validate required fields
+    $required_fields = [
+    'merchant_id' => 'Merchant ID',
+    'merchant_first_name' => 'First Name',
+    'merchant_last_name' => 'Last Name',
+    'merchant_email' => 'Email',
+    'merchant_phone' => 'Phone Number',
+    'merchant_dob' => 'Date of Birth',
+    'merchant_address' => 'Address',
+    'merchant_state' => 'State',
+    'merchant_lga' => 'LGA',
+    'merchant_business_name' => 'Business Name',
+    'merchant_business_description' => 'Business Description',
+    'merchant_support_email' => 'Business Email',
+    'merchant_business_phone' => 'Business Phone',
+    'cac_number' => 'CAC Number'
+    ];
+
+    foreach ($required_fields as $field => $label) {
+    if (empty($data[$field])) {
+    return json_encode([
+    "response_code" => 20,
+    "response_message" => "{$label} is required"
+    ]);
+    }
+    }
+
+    // Validate merchant_id exists and is not already completed
+    $merchant_check = $this->db_query("SELECT merchant_id, registration_completed FROM userdata WHERE merchant_id =
+    '{$data['merchant_id']}' LIMIT 1");
+    if (!$merchant_check || count($merchant_check) === 0) {
+    return json_encode([
+    "response_code" => 20,
+    "response_message" => "Invalid merchant ID"
+    ]);
+    }
+
+    if (isset($merchant_check[0]['registration_completed']) && $merchant_check[0]['registration_completed'] == 1) {
+    return json_encode([
+    "response_code" => 20,
+    "response_message" => "Registration has already been completed"
+    ]);
+    }
+
+    // Validate email format
+    if (!filter_var($data['merchant_email'], FILTER_VALIDATE_EMAIL)) {
+    return json_encode([
+    "response_code" => 20,
+    "response_message" => "Invalid email format"
+    ]);
+    }
+
+    if (!filter_var($data['merchant_support_email'], FILTER_VALIDATE_EMAIL)) {
+    return json_encode([
+    "response_code" => 20,
+    "response_message" => "Invalid business email format"
+    ]);
+    }
+
+    // Validate phone numbers (basic validation)
+    if (!preg_match('/^[0-9+\-\s\(\)]{10,15}$/', $data['merchant_phone'])) {
+    return json_encode([
+    "response_code" => 20,
+    "response_message" => "Invalid phone number format"
+    ]);
+    }
+
+    if (!preg_match('/^[0-9+\-\s\(\)]{10,15}$/', $data['merchant_business_phone'])) {
+    return json_encode([
+    "response_code" => 20,
+    "response_message" => "Invalid business phone number format"
+    ]);
+    }
+
+    // Validate date of birth
+    $dob = DateTime::createFromFormat('Y-m-d', $data['merchant_dob']);
+    if (!$dob) {
+    return json_encode([
+    "response_code" => 20,
+    "response_message" => "Invalid date of birth format"
+    ]);
+    }
+
+    // Check if user is at least 18 years old
+    $age = $dob->diff(new DateTime())->y;
+    if ($age < 18) { return json_encode([ "response_code"=> 20,
+        "response_message" => "You must be at least 18 years old to register"
+        ]);
+        }
+
+        // Check for duplicate emails
+        $email_check = $this->db_query("SELECT merchant_id FROM merchant_reg WHERE (merchant_email = '{$data['merchant_email']}') AND merchant_id != '{$data['merchant_id']}' LIMIT 1");
+        if ($email_check && count($email_check) > 0) {
+        return json_encode([
+        "response_code" => 21,
+        "response_message" => "Email address is already in use"
+        ]);
+        }
+
+        $business_email_check = $this->db_query("SELECT merchant_id FROM merchant_reg WHERE merchant_support_email =
+        '{$data['merchant_support_email']}' AND merchant_id != '{$data['merchant_id']}' LIMIT 1");
+        if ($business_email_check && count($business_email_check) > 0) {
+        return json_encode([
+        "response_code" => 21,
+        "response_message" => "Business email address is already in use"
+        ]);
+        }
+
+        // Check for duplicate CAC number
+        $cac_check = $this->db_query("SELECT merchant_id FROM merchant_reg WHERE cac_number = '{$data['cac_number']}' AND
+        merchant_id != '{$data['merchant_id']}' LIMIT 1");
+        if ($cac_check && count($cac_check) > 0) {
+        return json_encode([
+        "response_code" => 21,
+        "response_message" => "CAC number is already registered"
+        ]);
+        }
+
+        // Handle file uploads
+        $upload_dir = 'uploads/merchants/' . $data['merchant_id'] . '/';
+        if (!file_exists($upload_dir)) {
+        if (!mkdir($upload_dir, 0755, true)) {
+        return json_encode([
+        "response_code" => 500,
+        "response_message" => "Failed to create upload directory"
+        ]);
+        }
+        }
+
+        $uploaded_files = [];
+
+        // Handle logo upload
+        if (isset($_FILES['merchant_logo']) && $_FILES['merchant_logo']['error'] === UPLOAD_ERR_OK) {
+        $logo_info = pathinfo($_FILES['merchant_logo']['name']);
+        $logo_extension = strtolower($logo_info['extension']);
+
+        // Validate file type
+        $allowed_image_types = ['jpg', 'jpeg', 'png', 'gif'];
+        if (!in_array($logo_extension, $allowed_image_types)) {
+        return json_encode([
+        "response_code" => 20,
+        "response_message" => "Invalid logo file type. Only JPG, JPEG, PNG, and GIF are allowed"
+        ]);
+        }
+
+        // Validate file size (max 5MB)
+        if ($_FILES['merchant_logo']['size'] > 5 * 1024 * 1024) {
+        return json_encode([
+        "response_code" => 20,
+        "response_message" => "Logo file size must be less than 5MB"
+        ]);
+        }
+
+        $logo_filename = 'logo_' . time() . '.' . $logo_extension;
+        $logo_path = $upload_dir . $logo_filename;
+
+        if (move_uploaded_file($_FILES['merchant_logo']['tmp_name'], $logo_path)) {
+        $uploaded_files['merchant_logo'] = $logo_path;
+        $data['merchant_logo_path'] = $logo_path;
+        } else {
+        return json_encode([
+        "response_code" => 500,
+        "response_message" => "Failed to upload logo file"
+        ]);
+        }
+        }
+
+        // Handle CAC document upload
+        if (isset($_FILES['cac_document']) && $_FILES['cac_document']['error'] === UPLOAD_ERR_OK) {
+        $cac_info = pathinfo($_FILES['cac_document']['name']);
+        $cac_extension = strtolower($cac_info['extension']);
+
+        // Validate file type
+        $allowed_doc_types = ['pdf', 'jpg', 'jpeg', 'png'];
+        if (!in_array($cac_extension, $allowed_doc_types)) {
+        return json_encode([
+        "response_code" => 20,
+        "response_message" => "Invalid CAC document file type. Only PDF, JPG, JPEG, and PNG are allowed"
+        ]);
+        }
+
+        // Validate file size (max 10MB)
+        if ($_FILES['cac_document']['size'] > 10 * 1024 * 1024) {
+        return json_encode([
+        "response_code" => 20,
+        "response_message" => "CAC document file size must be less than 10MB"
+        ]);
+        }
+
+        $cac_filename = 'cac_' . time() . '.' . $cac_extension;
+        $cac_path = $upload_dir . $cac_filename;
+
+        if (move_uploaded_file($_FILES['cac_document']['tmp_name'], $cac_path)) {
+        $uploaded_files['cac_document'] = $cac_path;
+        $data['cac_document_path'] = $cac_path;
+        } else {
+        return json_encode([
+        "response_code" => 500,
+        "response_message" => "Failed to upload CAC document"
+        ]);
+        }
+        }
+
+        // Prepare data for database update
+        $update_data = [
+        'merchant_id' => $data['merchant_id'],
+        'merchant_first_name' => $data['merchant_first_name'],
+        'merchant_last_name' => $data['merchant_last_name'],
+        'merchant_email' => $data['merchant_email'],
+        'merchant_phone' => $data['merchant_phone'],
+        'merchant_dob' => $data['merchant_dob'],
+        'merchant_address' => $data['merchant_address'],
+        'merchant_state' => $data['merchant_state'],
+        'merchant_lga' => $data['merchant_lga'],
+        'merchant_business_name' => $data['merchant_business_name'],
+        'merchant_business_description' => $data['merchant_business_description'],
+        'merchant_support_email' => $data['merchant_support_email'],
+        'merchant_business_phone' => $data['merchant_business_phone'],
+        'cac_number' => $data['cac_number'],
+        'registration_completed' => 1,
+        'profile_completed_at' => date('Y-m-d H:i:s'),
+        'updated_at' => date('Y-m-d H:i:s')
+        ];
+
+        // Add file paths if uploaded
+        if (isset($data['merchant_logo_path'])) {
+        $update_data['merchant_logo_path'] = $data['merchant_logo_path'];
+        }
+        if (isset($data['cac_document_path'])) {
+        $update_data['cac_document_path'] = $data['cac_document_path'];
+        }
+
+        // Update the user record
+        $update_result = $this->doInsert('merchant_reg', $update_data, []);
+        // Check
+
+        if ($update_result) {
+            $update_condition = "['username' => $username, 'registration_code' => $data[registration_code]";
+        // Log the completion
+        $log_data = [
+        'username' => $username,
+        'registration_completed' => 1,
+        ];
+        $this->doUpdate('userdata', $log_data, [],$update_condition);
+
+        return json_encode([
+        'response_code' => 0,
+        'response_message' => 'Registration completed successfully! Welcome to our platform.',
+        'data' => [
+        'merchant_id' => $data['merchant_id'],
+        'redirect' => 'home.php'
+        ]
+        ]);
+        } else {
+        // Clean up uploaded files if database update failed
+        foreach ($uploaded_files as $file_path) {
+        if (file_exists($file_path)) {
+        unlink($file_path);
+        }
+        }
+
+        return json_encode([
+        "response_code" => 500,
+        "response_message" => "Failed to complete registration. Please try again."
+        ]);
+        }
+
+        } catch (Exception $e) {
+        // Clean up uploaded files if there was an error
+        if (isset($uploaded_files)) {
+        foreach ($uploaded_files as $file_path) {
+        if (file_exists($file_path)) {
+        unlink($file_path);
+        }
+        }
+        }
+
+        return json_encode([
+        "response_code" => 500,
+        "response_message" => "An error occurred: " . $e->getMessage()
+        ]);
+        }
+        }
 
     
     public function updatePastorBank($data)

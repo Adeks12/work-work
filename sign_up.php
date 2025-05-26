@@ -123,7 +123,7 @@ $crossorigin = 'anonymous';
 						<input class="form-control" type="password" name="password" id="password"
 							placeholder="Enter your password" required />
 						<i class="fa fa-eye toggle-password position-absolute" data-target="password"
-							style="right: 10px; top: 38px; cursor: pointer;"></i>
+							style="right: 10px; top: 44px; cursor: pointer;"></i>
 					</div>
 
 					<div class="mb-3 password-container position-relative">
@@ -131,7 +131,7 @@ $crossorigin = 'anonymous';
 						<input class="form-control" type="password" name="confirm_password" id="confirm_password"
 							placeholder="Confirm your password" required />
 						<i class="fa fa-eye toggle-password position-absolute" data-target="confirm_password"
-							style="right: 10px; top: 38px; cursor: pointer;"></i>
+							style="right: 10px; top: 44px; cursor: pointer;"></i>
 					</div>
 
 					<div id="register_mssg" class="mb-3"></div>

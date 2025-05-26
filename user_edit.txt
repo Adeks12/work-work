@@ -1,1 +1,1 @@
-UPDATE verification_tokens SET used='1' WHERE  email='Jesuslovestestimony@gmail.com' AND verification_code='420166' 
+UPDATE userdata SET username='Jesuslovestestimony@gmail.com',registration_completed='1' WHERE 
