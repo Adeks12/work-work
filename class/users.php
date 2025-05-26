@@ -893,16 +893,16 @@ class Users extends dbobject
 
         // Update the user record
         $update_result = $this->doInsert('merchant_reg', $update_data, []);
+        
         // Check
-
         if ($update_result) {
-            $update_condition = "['username' => $username, 'registration_code' => $data[registration_code]";
-        // Log the completion
+        // Log the completion in userdata
         $log_data = [
-        'username' => $username,
         'registration_completed' => 1,
+        'profile_completed_at' => date('Y-m-d H:i:s')
         ];
-        $this->doUpdate('userdata', $log_data, [],$update_condition);
+        $answer = $this->doUpdate('userdata', $log_data, [], ['username' => $username]);
+        // Optionally, you can log or check $answer for success
 
         return json_encode([
         'response_code' => 0,
