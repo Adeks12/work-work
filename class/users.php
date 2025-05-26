@@ -97,111 +97,125 @@ class Users extends dbobject
     // }
 
     public function login($data)
-	{
+{
+    $username = $data['username'];
+    $password = $data['password'];
+    $validate = $this->validate(
+        $data,
+        array('username' => 'required|email', 'password' => 'required'),
+        array('username' => 'Username', 'password' => 'Password')
+    );
+    if($validate['error'])
+    {
+        return json_encode(array('response_code'=>13,'response_message'=>$validate['messages'][0]));
+    }
+    
+    // Modified SQL to include registration_completed field
+    $sql = "SELECT username,firstname,lastname,sex,role_id,password,user_locked,user_disabled,pin_missed,day_1,day_2,day_3,day_4,day_5,day_6,day_7,passchg_logon,photo,church_id,registration_completed FROM userdata WHERE username = '$username' LIMIT 1";
+    $result = $this->db_query($sql,true);
+    $count = count($result); 
         
-		$username = $data['username'];
-		$password = $data['password'];
-        $validate = $this->validate(
-            $data,
-            array('username' => 'required|email', 'password' => 'required'),
-            array('username' => 'Username', 'password' => 'Password')
-        );
-        if($validate['error'])
+    if($count > 0)
+    {
+        if($result[0]['pin_missed'] < 5)
         {
-            return json_encode(array('response_code'=>13,'response_message'=>$validate['messages'][0]));
-        }
-		$sql      = "SELECT username,firstname,lastname,sex,role_id,password,user_locked,user_disabled,pin_missed,day_1,day_2,day_3,day_4,day_5,day_6,day_7,passchg_logon,photo,church_id FROM userdata WHERE username = '$username' LIMIT 1";
-		$result   = $this->db_query($sql,true);
-		$count    = count($result); 
-		if($count > 0)
-		{
-            if($result[0]['pin_missed'] < 5)
+            $encrypted_password = $result[0]['password'];
+            $is_locked = $result[0]['user_locked'];
+            $is_disabled = $result[0]['user_disabled'];
+            $registration_completed = $result[0]['registration_completed']; // Get registration status
+
+            $desencrypt = new DESEncryption();
+            $key = $username;
+            $cipher_password = $desencrypt->des($key, $password, 1, 0, null,null);
+            $str_cipher_password = $desencrypt->stringToHex ($cipher_password);
+            
+            if($str_cipher_password == $encrypted_password)
             {
-                $encrypted_password = $result[0]['password'];
-                $is_locked     = $result[0]['user_locked'];
-                $is_disabled     = $result[0]['user_disabled'];
-                // $verify_pass   = password_verify($password,$hash_password);
-
-                $desencrypt = new DESEncryption();
-                $key = $username;
-                $cipher_password = $desencrypt->des($key, $password, 1, 0, null,null);
-                $str_cipher_password = $desencrypt->stringToHex ($cipher_password);
-                if($str_cipher_password == $encrypted_password)
-                // if(1 == 1)
+                if($is_disabled != 1)
                 {
-                    if($is_disabled != 1)
+                    if($is_locked != 1)
                     {
-                        if($is_locked != 1)
+                        $work_day = $this->workingDays($result[0]);
+                        if($work_day['code'] != "44")
                         {
-                            $work_day = $this->workingDays($result[0]);
-                            if($work_day['code'] != "44")
+                            if($result[0]['church_id'] != "99")
                             {
-                                if($result[0]['church_id'] != "99")
-                                {
-                                    $church_details = $this->getItemLabelArr('church_table',array('church_id'),array($result[0]['church_id']),array('church_type','state','church_name'));
-                                    $_SESSION['username_sess']   = $result[0]['username'];
-                                    $_SESSION['firstname_sess']  = $result[0]['firstname'];
-                                    $_SESSION['lastname_sess']   = $result[0]['lastname'];
-                                    $_SESSION['sex_sess']        = $result[0]['sex'];
-                                    $_SESSION['role_id_sess']    = $result[0]['role_id'];
-                                    $_SESSION['church_id_sess']  = $result[0]['church_id'];
-                                    $_SESSION['photo_file_sess']  = $result[0]['photo'];
-                                    $_SESSION['photo_path_sess']  = "img/profile_photo/".$result[0]['photo'];
-                                    $_SESSION['church_type_id_sess'] = (isset($church_details['church_type'])) ?$church_details['church_type'] : 0;
-                                    $_SESSION['state_id_sess'] = (isset($church_details['state'])) ? $church_details['state'] : "FCT";
-                                    $_SESSION['church_name_sess']= (isset($church_details['church_name'])) ? $church_details['church_name'] : "The lords Chosen";
-                                    $_SESSION['role_id_name']    = $this->getitemlabel('role','role_id',$result[0]['role_id'],'role_name');
+                                $church_details = $this->getItemLabelArr('church_table',array('church_id'),array($result[0]['church_id']),array('church_type','state','church_name'));
+                                $_SESSION['username_sess'] = $result[0]['username'];
+                                $_SESSION['firstname_sess'] = $result[0]['firstname'];
+                                $_SESSION['lastname_sess'] = $result[0]['lastname'];
+                                $_SESSION['sex_sess'] = $result[0]['sex'];
+                                $_SESSION['role_id_sess'] = $result[0]['role_id'];
+                                $_SESSION['church_id_sess'] = $result[0]['church_id'];
+                                $_SESSION['photo_file_sess'] = $result[0]['photo'];
+                                $_SESSION['photo_path_sess'] = "img/profile_photo/".$result[0]['photo'];
+                                $_SESSION['church_type_id_sess'] = (isset($church_details['church_type'])) ?$church_details['church_type'] : 0;
+                                $_SESSION['state_id_sess'] = (isset($church_details['state'])) ? $church_details['state'] : "FCT";
+                                $_SESSION['church_name_sess']= (isset($church_details['church_name'])) ? $church_details['church_name'] : "The lords Chosen";
+                                $_SESSION['role_id_name'] = $this->getitemlabel('role','role_id',$result[0]['role_id'],'role_name');
 
-                                    
-                                    //update pin missed and last_login
-                                    $this->resetpinmissed($username);
-                                    return json_encode(array("response_code"=>0,"response_message"=>"Login Successful"));
+                                //update pin missed and last_login
+                                $this->resetpinmissed($username);
+                                
+                                // Check registration completion status and set redirect URL
+                                if($registration_completed == 1) {
+                                    $redirect_url = "home.php";
+                                } else {
+                                    $redirect_url = "complete_onboarding.php";
                                 }
-                                else
-                                {
-                                    return json_encode(array("response_code"=>779,"response_message"=>"You can't login now... A profile transfer is currently ongoing. Try again at a later time or contact the Administrator"));
-                                }
-
+                                
+                                return json_encode(array(
+                                    "response_code" => 0,
+                                    "response_message" => "Login Successful",
+                                    "data" => [
+                                    "redirect" => $redirect_url
+                                    ]
+                                ));
                             }
                             else
                             {
-                                return json_encode(array("response_code"=>61,"response_message"=>$work_day['mssg']));
+                                return json_encode(array("response_code"=>779,"response_message"=>"You can't login now... A profile transfer is currently ongoing. Try again at a later time or contact the Administrator"));
                             }
                         }
                         else
                         {
-                            //inform the user that the account has been locked, and to contact admin, user has to provide useful info b4 he is unlocked
-                            return json_encode(array("response_code"=>60,"response_message"=>"Your account has been locked, kindly contact the administrator."));
+                            return json_encode(array("response_code"=>61,"response_message"=>$work_day['mssg']));
                         }
                     }
                     else
                     {
-                        return json_encode(array("response_code"=>610,"response_message"=>"Your user privilege has been revoked. Kindly contact the administrator"));
+                        //inform the user that the account has been locked, and to contact admin, user has to provide useful info b4 he is unlocked
+                        return json_encode(array("response_code"=>60,"response_message"=>"Your account has been locked, kindly contact the administrator."));
                     }
                 }
-                else	
+                else
                 {
-                    $this->updatepinmissed($username);
-                    
-                    $remaining = (($result[0]['pin_missed']+1) <= 5)?(5-($result[0]['pin_missed']+1)):0;
-                    return json_encode(array("response_code"=>90,"response_message"=>"Invalid username or password, ".$remaining." attempt remaining"));
+                    return json_encode(array("response_code"=>610,"response_message"=>"Your user privilege has been revoked. Kindly contact the administrator"));
                 }
             }
-            elseif($result[0]['pin_missed'] == 5)
+            else	
             {
-                $this->updateuserlock($username,'1');
-                return json_encode(array("response_code"=>64,"response_message"=>"Your account has been locked, kindly contact the administrator."));
+                $this->updatepinmissed($username);
+                
+                $remaining = (($result[0]['pin_missed']+1) <= 5)?(5-($result[0]['pin_missed']+1)):0;
+                return json_encode(array("response_code"=>90,"response_message"=>"Invalid username or password, ".$remaining." attempt remaining"));
             }
-            else
-            {
-                 return json_encode(array("response_code"=>62,"response_message"=>"Your account has been locked, kindly contact the administrator."));
-            }
-		}
+        }
+        elseif($result[0]['pin_missed'] == 5)
+        {
+            $this->updateuserlock($username,'1');
+            return json_encode(array("response_code"=>64,"response_message"=>"Your account has been locked, kindly contact the administrator."));
+        }
         else
-		{
-			return json_encode(array("response_code"=>20,"response_message"=>"Invalid username or password"));
-		}
+        {
+             return json_encode(array("response_code"=>62,"response_message"=>"Your account has been locked, kindly contact the administrator."));
+        }
     }
+    else
+    {
+        return json_encode(array("response_code"=>20,"response_message"=>"Invalid username or password"));
+    }
+}
 
 
     public function userlist($data)

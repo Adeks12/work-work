@@ -31,7 +31,7 @@ header('X-Frame-Options: SAMEORIGIN');
   data-sidebar-position: left (default), right
   data-sidebar-behavior: sticky (default), fixed, compact
 -->
-<html lang="en" data-bs-theme="dark" data-layout="fluid" data-sidebar-theme="dark" data-sidebar-position="left" data-sidebar-behavior="sticky">
+<html lang="en"  data-layout="fluid" data-sidebar-position="left" data-sidebar-behavior="sticky">
 
 
 <!-- Mirrored from appstack.bootlab.io/dashboard-default?sidebarBehavior=compact by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 12 Aug 2024 10:53:39 GMT -->

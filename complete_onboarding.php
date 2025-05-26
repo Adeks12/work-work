@@ -55,6 +55,10 @@ if (!isset($_SESSION['username_sess'])) {
     <script src="js/jquery-3.6.0.min.js"></script>
     <script src="js/jquery.blockUI.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 </head>
 
 <body class="bg-gradient-to-br from-cyan-50 to-cyan-100 min-h-screen flex items-center justify-center">
@@ -104,7 +108,7 @@ if (!isset($_SESSION['username_sess'])) {
                     <label class="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
                     <input type="date" required
                         class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-cyan-400 focus:outline-none"
-                        id="merchant_dob" name="merchant_dob" />
+                        id="merchant_dob" name="merchant_dob" max="" />
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
@@ -114,8 +118,8 @@ if (!isset($_SESSION['username_sess'])) {
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">State of Origin</label>
                     <select onchange="fetchLgas(this.value)" required
-                        class="form-control w-full border border-gray-300 rounded-lg p-2" name="merchant_state"
-                        id="merchant_state">
+                        class="form-control w-full border border-gray-300 rounded-lg p-2 select2"
+                        name="merchant_state" id="merchant_state">
                         <option value="">::SELECT STATE::</option>
                         <?php
                             foreach ($states as $row) {
@@ -127,8 +131,8 @@ if (!isset($_SESSION['username_sess'])) {
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">LGA</label>
-                    <select class="form-control w-full border border-gray-300 rounded-lg p-2" name="merchant_lga"
-                        id="merchant_lga" required>
+                    <select class="form-control w-full border border-gray-300 rounded-lg p-2 select2"
+                        name="merchant_lga" id="merchant_lga" required>
                         <option value="">::SELECT LGA::</option>
                     </select>
                 </div>
@@ -167,8 +171,21 @@ if (!isset($_SESSION['username_sess'])) {
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Upload Business Logo</label>
-                    <input type="file" required class="w-full border border-gray-300 rounded-lg p-2 bg-white"
-                        id="merchant_logo" name="merchant_logo" accept="image/*" />
+                    <div class="relative w-32 h-32 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 cursor-pointer hover:border-cyan-400 transition group" onclick="document.getElementById('merchant_logo').click()">
+                        <img id="logoPreview" src="#" alt="Logo Preview" class="hidden absolute inset-0 w-full h-full object-contain rounded-lg" />
+                        <span id="logoPlaceholder" class="text-gray-400 flex flex-col items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7M16 3H8a2 2 0 00-2 2v0a2 2 0 002 2h8a2 2 0 002-2v0a2 2 0 00-2-2z" />
+                            </svg>
+                            <span class="text-xs">Click to upload</span>
+                        </span>
+                        <button type="button" id="removeLogoBtn" class="hidden absolute top-1 right-1 bg-white rounded-full p-1 shadow hover:bg-gray-100" onclick="removeImage(event, 'merchant_logo', 'logoPreview', 'logoPlaceholder', 'removeLogoBtn')">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    <input type="file" required class="hidden" id="merchant_logo" name="merchant_logo" accept="image/*" onchange="previewImage(this, 'logoPreview', 'logoPlaceholder', 'removeLogoBtn')" />
                 </div>
                 <div class="col-span-2 flex justify-between mt-4">
                     <button type="button"
@@ -189,8 +206,22 @@ if (!isset($_SESSION['username_sess'])) {
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Upload CAC Document</label>
-                    <input type="file" required class="w-full border border-gray-300 rounded-lg p-2 bg-white"
-                        id="cac_document" name="cac_document" accept=".pdf,.jpg,.jpeg,.png" />
+                    <div class="relative w-32 h-32 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 cursor-pointer hover:border-cyan-400 transition group" onclick="document.getElementById('cac_document').click()">
+                        <img id="cacPreview" src="#" alt="CAC Preview" class="hidden absolute inset-0 w-full h-full object-contain rounded-lg" />
+                        <span id="cacPlaceholder" class="text-gray-400 flex flex-col items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 014-4h2a4 4 0 014 4v2M7 7a4 4 0 018 0v4a4 4 0 01-8 0V7z" />
+                            </svg>
+                            <span class="text-xs">Click to upload</span>
+                        </span>
+                        <span id="cacFileName" class="hidden absolute bottom-1 left-1 right-1 text-xs text-gray-500 bg-white bg-opacity-80 rounded px-1 py-0.5"></span>
+                        <button type="button" id="removeCacBtn" class="hidden absolute top-1 right-1 bg-white rounded-full p-1 shadow hover:bg-gray-100" onclick="removeImage(event, 'cac_document', 'cacPreview', 'cacPlaceholder', 'removeCacBtn')">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    <input type="file" required class="hidden" id="cac_document" name="cac_document" accept=".pdf,.jpg,.jpeg,.png" onchange="previewImage(this, 'cacPreview', 'cacPlaceholder', 'removeCacBtn', 'cac')" />
                 </div>
                 <div class="col-span-2 flex justify-between mt-4">
                     <button type="button"
@@ -274,12 +305,160 @@ if (!isset($_SESSION['username_sess'])) {
                         options += `<option value="${lga.id}">${lga.Lga}</option>`;
                     });
                     lgaSelect.innerHTML = options;
+                    // Re-initialize Select2 after updating options
+                    $('#merchant_lga').select2({
+                        width: '100%',
+                        placeholder: 'Select an option',
+                        allowClear: true
+                    });
                 })
                 .catch(error => {
                     console.error("Error fetching LGAs:", error);
                     lgaSelect.innerHTML = '<option value="">Error loading LGAs</option>';
                 });
         }
+
+        function previewImage(input, previewId, placeholderId, removeBtnId, type = 'logo') {
+            const file = input.files[0];
+            const preview = document.getElementById(previewId);
+            const placeholder = document.getElementById(placeholderId);
+            const removeBtn = document.getElementById(removeBtnId);
+            let errorSpan = preview.parentElement.querySelector('.file-error');
+            if (!errorSpan) {
+                errorSpan = document.createElement('span');
+                errorSpan.className = 'file-error text-xs text-red-500 absolute bottom-1 left-1 right-1 bg-white bg-opacity-80 rounded px-1 py-0.5';
+                preview.parentElement.appendChild(errorSpan);
+            }
+            errorSpan.textContent = '';
+            errorSpan.classList.add('hidden');
+
+            // Validation rules
+            let allowedTypes, maxSizeMB;
+            if (type === 'logo') {
+                allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+                maxSizeMB = 5;
+            } else if (type === 'cac') {
+                allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+                maxSizeMB = 10;
+            }
+
+            if (!file) {
+                preview.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+                if (removeBtn) removeBtn.classList.add('hidden');
+                if (type === 'cac') {
+                    document.getElementById('cacFileName').classList.add('hidden');
+                    document.getElementById('cacFileName').textContent = '';
+                }
+                return;
+            }
+
+            // Check file type
+            if (!allowedTypes.includes(file.type)) {
+                preview.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+                if (removeBtn) removeBtn.classList.add('hidden');
+                errorSpan.textContent = type === 'logo'
+                    ? 'Invalid file type. Only JPG, JPEG, PNG, and GIF allowed.'
+                    : 'Invalid file type. Only PDF, JPG, JPEG, and PNG allowed.';
+                errorSpan.classList.remove('hidden');
+                input.value = '';
+                if (type === 'cac') {
+                    document.getElementById('cacFileName').classList.add('hidden');
+                    document.getElementById('cacFileName').textContent = '';
+                }
+                return;
+            }
+
+            // Check file size
+            if (file.size > maxSizeMB * 1024 * 1024) {
+                preview.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+                if (removeBtn) removeBtn.classList.add('hidden');
+                errorSpan.textContent = type === 'logo'
+                    ? 'File too large. Max 5MB allowed.'
+                    : 'File too large. Max 10MB allowed.';
+                errorSpan.classList.remove('hidden');
+                input.value = '';
+                if (type === 'cac') {
+                    document.getElementById('cacFileName').classList.add('hidden');
+                    document.getElementById('cacFileName').textContent = '';
+                }
+                return;
+            }
+
+            // If CAC and PDF, show filename
+            if (type === 'cac' && file.type === 'application/pdf') {
+                preview.classList.add('hidden');
+                placeholder.classList.add('hidden');
+                if (removeBtn) removeBtn.classList.remove('hidden');
+                const fileNameSpan = document.getElementById('cacFileName');
+                fileNameSpan.textContent = file.name;
+                fileNameSpan.classList.remove('hidden');
+                errorSpan.classList.add('hidden');
+                return;
+            }
+
+            // If image, show preview
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                    if (removeBtn) removeBtn.classList.remove('hidden');
+                    errorSpan.classList.add('hidden');
+                    if (type === 'cac') {
+                        document.getElementById('cacFileName').classList.add('hidden');
+                        document.getElementById('cacFileName').textContent = '';
+                    }
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function removeImage(event, inputId, previewId, placeholderId, removeBtnId) {
+            event.stopPropagation();
+            const input = document.getElementById(inputId);
+            const preview = document.getElementById(previewId);
+            const placeholder = document.getElementById(placeholderId);
+            const removeBtn = document.getElementById(removeBtnId);
+            let errorSpan = preview.parentElement.querySelector('.file-error');
+            if (errorSpan) {
+                errorSpan.textContent = '';
+                errorSpan.classList.add('hidden');
+            }
+
+            input.value = '';
+            preview.src = "#";
+            preview.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+            if (removeBtn) removeBtn.classList.add('hidden');
+            if (inputId === 'cac_document') {
+                document.getElementById('cacFileName').classList.add('hidden');
+                document.getElementById('cacFileName').textContent = '';
+            }
+        }
+
+        // Set max date for DOB to ensure user is at least 18 years old
+        document.addEventListener("DOMContentLoaded", function() {
+            const dobInput = document.getElementById('merchant_dob');
+            if (dobInput) {
+                const today = new Date();
+                today.setFullYear(today.getFullYear() - 18);
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const dd = String(today.getDate()).padStart(2, '0');
+                dobInput.max = `${yyyy}-${mm}-${dd}`;
+            }
+
+            // Initialize Select2 for all .select2 elements
+            $('.select2').select2({
+                width: '100%',
+                placeholder: 'Select an option',
+                allowClear: true
+            });
+        });
 
         document.getElementById("multiStepForm").addEventListener("submit", function (e) {
             e.preventDefault();
