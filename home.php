@@ -4,9 +4,11 @@ $dbobject = new dbobject();
 
 $crossorigin = 'anonymous';
 
+
+
 @session_start();
 if (!isset($_SESSION['username_sess'])) {
-    header('location: logout.php');
+    header('location: sign_in.php');
 }
 
 require_once('class/menu.php');
@@ -14,15 +16,17 @@ $menu = new Menu();
 $menu_list = $menu->generateMenu($_SESSION['role_id_sess']);
 $menu_list = $menu_list['data'];
 
-$sql = "SELECT bank_name,account_no,account_name FROM userdata WHERE username = '$_SESSION[username_sess]' LIMIT 1 ";
+$sql = "SELECT bank_name,account_no,account_name,registration_completed FROM userdata WHERE username = '$_SESSION[username_sess]' LIMIT 1 ";
 $user_det = $dbobject->db_query($sql);
+
+// Check if registration is complete
+$registration_complete = isset($user_det[0]['registration_completed']) ? $user_det[0]['registration_completed'] : 0;
 
 header("Cache-Control: no-cache;no-store, must-revalidate");
 header_remove("X-Powered-By");
 header_remove("Server");
 header('X-Frame-Options: SAMEORIGIN');
 ?>
-
 <!DOCTYPE html>
 <!--
   HOW TO USE: 
@@ -31,1315 +35,569 @@ header('X-Frame-Options: SAMEORIGIN');
   data-sidebar-position: left (default), right
   data-sidebar-behavior: sticky (default), fixed, compact
 -->
-<html lang="en"  data-layout="fluid" data-sidebar-position="left" data-sidebar-behavior="sticky">
+<html lang="en" data-layout="fluid" data-sidebar-position="left" data-sidebar-behavior="sticky">
 
-
-<!-- Mirrored from appstack.bootlab.io/dashboard-default?sidebarBehavior=compact by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 12 Aug 2024 10:53:39 GMT -->
-<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
 <head>
-	<meta charset="utf-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-	<meta name="description" content="Responsive Bootstrap 5 Admin &amp; Dashboard Template">
-	<meta name="author" content="Bootlab">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="Responsive Bootstrap 5 Admin &amp; Dashboard Template">
+    <meta name="author" content="Bootlab">
+    <meta http-equiv="Cache-control" content="no-cache;no-store">
 
-	<title>Default Dashboard | AppStack - Bootstrap 5 Admin &amp; Dashboard Template</title>
+    <title>Dashboard | Vuvaa Lifestyle</title>
 
-	<link rel="canonical" href="dashboard-default.html" />
-	<link rel="shortcut icon" href="img/favicon.ico">
+    <link rel="canonical" href="home.php" />
+    <link rel="shortcut icon" href="img/favicon.ico">
+    <link rel="icon" href="img/icon.png" sizes="32x32" />
 
-	<link rel="preconnect" href="https://fonts.googleapis.com/">
-	<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500&amp;display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com/">
+    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500&amp;display=swap" rel="stylesheet">
 
-	<link href="css/app.css" rel="stylesheet">
-
-	<!-- BEGIN SETTINGS -->
-	<!-- Remove this after purchasing -->
-	<script src="js/settings.js"></script>
-	<!-- END SETTINGS -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-Q3ZYEKLQ68"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-Q3ZYEKLQ68');
-</script></head>
-
-<body>
-	<div class="wrapper">
-		<nav id="sidebar" class="sidebar">
-			<div class="sidebar-content js-simplebar">
-				<a class='sidebar-brand' href='index.html'>
-          <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-            width="20px" height="20px" viewBox="0 0 20 20" enable-background="new 0 0 20 20" xml:space="preserve">
-            <path d="M19.4,4.1l-9-4C10.1,0,9.9,0,9.6,0.1l-9,4C0.2,4.2,0,4.6,0,5s0.2,0.8,0.6,0.9l9,4C9.7,10,9.9,10,10,10s0.3,0,0.4-0.1l9-4
-              C19.8,5.8,20,5.4,20,5S19.8,4.2,19.4,4.1z"/>
-            <path d="M10,15c-0.1,0-0.3,0-0.4-0.1l-9-4c-0.5-0.2-0.7-0.8-0.5-1.3c0.2-0.5,0.8-0.7,1.3-0.5l8.6,3.8l8.6-3.8c0.5-0.2,1.1,0,1.3,0.5
-              c0.2,0.5,0,1.1-0.5,1.3l-9,4C10.3,15,10.1,15,10,15z"/>
-            <path d="M10,20c-0.1,0-0.3,0-0.4-0.1l-9-4c-0.5-0.2-0.7-0.8-0.5-1.3c0.2-0.5,0.8-0.7,1.3-0.5l8.6,3.8l8.6-3.8c0.5-0.2,1.1,0,1.3,0.5
-              c0.2,0.5,0,1.1-0.5,1.3l-9,4C10.3,20,10.1,20,10,20z"/>
-          </svg>
+    <link class="js-stylesheet" href="css/light.css" rel="stylesheet">
+    <link href="css/app.css" rel="stylesheet">
     
-          <span class="align-middle me-3">AppStack</span>
-        </a>
+    <script src="js/settings.js"></script>
+    <script src="https://use.fontawesome.com/fdb76255c2.js"></script>
 
-				<ul class="sidebar-nav">
-					<li class="sidebar-header">
-						Navigation
-					</li>
-					<li class="sidebar-item active">
-						<a data-bs-target="#dashboards" data-bs-toggle="collapse" class="sidebar-link">
-              <i class="align-middle" data-lucide="sliders"></i> <span class="align-middle">Dashboards</span>
-              <span class="badge badge-sidebar-primary">5</span>
-            </a>
-						<ul id="dashboards" class="sidebar-dropdown list-unstyled collapse show" data-bs-parent="#sidebar">
-							<li class="sidebar-item active"><a class='sidebar-link' href='dashboard-default-2.html'>Default</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='dashboard-analytics.html'>Analytics</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='dashboard-saas'>SaaS</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='dashboard-social.html'>Social</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='dashboard-crypto.html'>Crypto</a></li>
-						</ul>
-					</li>
-					<li class="sidebar-header">
-						Apps
-					</li>
-					<li class="sidebar-item">
-						<a data-bs-target="#ecommerce" data-bs-toggle="collapse" class="sidebar-link collapsed">
-              <i class="align-middle" data-lucide="shopping-bag"></i> <span class="align-middle">E-Commerce</span>
-            </a>
-						<ul id="ecommerce" class="sidebar-dropdown list-unstyled collapse " data-bs-parent="#sidebar">
-							<li class="sidebar-item"><a class='sidebar-link' href='ecommerce-products.html'>
-                Products <span class="badge badge-sidebar-primary">New</span>
-              </a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='ecommerce-products-details.html'>
-                Product Details <span class="badge badge-sidebar-primary">New</span>
-              </a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='ecommerce-orders.html'>
-                Orders <span class="badge badge-sidebar-primary">New</span>
-              </a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='ecommerce-customers.html'>Customers</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='ecommerce-invoice.html'>Invoice</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='ecommerce-pricing.html'>Pricing</a></li>
-						</ul>
-					</li>
-					<li class="sidebar-item">
-						<a data-bs-target="#projects" data-bs-toggle="collapse" class="sidebar-link collapsed">
-              <i class="align-middle" data-lucide="layout"></i> <span class="align-middle">Projects</span>
-            </a>
-						<ul id="projects" class="sidebar-dropdown list-unstyled collapse " data-bs-parent="#sidebar">
-							<li class="sidebar-item"><a class='sidebar-link' href='projects-overview.html'>Overview</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='projects-details.html'>Details</a></li>
-						</ul>
-					</li>
-					<li class="sidebar-item">
-						<a class='sidebar-link' href='chat.html'>
-              <i class="align-middle" data-lucide="list"></i> <span class="align-middle">Chat</span>
-            </a>
-					</li>
-					<li class="sidebar-item">
-						<a class='sidebar-link' href='file-manager.html'>
-              <i class="align-middle" data-lucide="files"></i> <span class="align-middle">File Manager</span>
-              <span class="badge badge-sidebar-primary">New</span>
-            </a>
-					</li>
-					<li class="sidebar-item">
-						<a class='sidebar-link' href='calendar.html'>
-              <i class="align-middle" data-lucide="calendar"></i> <span class="align-middle">Calendar</span>
-            </a>
-					</li>
-					<li class="sidebar-item">
-						<a data-bs-target="#email" data-bs-toggle="collapse" class="sidebar-link collapsed">
-              <i class="align-middle" data-lucide="mail"></i> <span class="align-middle">Email</span>
-              <span class="badge badge-sidebar-primary">New</span>
-            </a>
-						<ul id="email" class="sidebar-dropdown list-unstyled collapse " data-bs-parent="#sidebar">
-							<li class="sidebar-item"><a class='sidebar-link' href='email-inbox.html'>Inbox</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='email-details.html'>Details</a></li>
-						</ul>
-					</li>
-					<li class="sidebar-item">
-						<a data-bs-target="#tasks" data-bs-toggle="collapse" class="sidebar-link collapsed">
-              <i class="align-middle" data-lucide="trello"></i> <span class="align-middle">Tasks</span>
-            </a>
-						<ul id="tasks" class="sidebar-dropdown list-unstyled collapse " data-bs-parent="#sidebar">
-							<li class="sidebar-item"><a class='sidebar-link' href='tasks-list.html'>
-                List
-                <span class="badge badge-sidebar-primary">New</span>
-              </a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='tasks-kanban.html'>Kanban</a></li>
-						</ul>
-					</li>
-					<li class="sidebar-header">
-						Pages
-					</li>
-					<li class="sidebar-item">
-						<a data-bs-target="#pages" data-bs-toggle="collapse" class="sidebar-link collapsed">
-              <i class="align-middle" data-lucide="layout"></i> <span class="align-middle">Pages</span>
-            </a>
-						<ul id="pages" class="sidebar-dropdown list-unstyled collapse " data-bs-parent="#sidebar">
-							<li class="sidebar-item"><a class='sidebar-link' href='pages-profile.html'>Profile</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='pages-settings.html'>Settings</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='pages-blank.html'>Blank Page</a></li>
-						</ul>
-					</li>
-					<li class="sidebar-item">
-						<a data-bs-target="#auth" data-bs-toggle="collapse" class="sidebar-link collapsed">
-              <i class="align-middle" data-lucide="users"></i> <span class="align-middle">Auth</span>
-              <span class="badge badge-sidebar-secondary">Special</span>
-            </a>
-						<ul id="auth" class="sidebar-dropdown list-unstyled collapse " data-bs-parent="#sidebar">
-							<li class="sidebar-item"><a class='sidebar-link' href='auth-sign-in.html'>Sign In</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='auth-sign-in-cover.html'>Sign In Cover</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='auth-sign-up.html'>Sign Up</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='auth-sign-up-cover.html'>Sign Up Cover</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='auth-reset-password.html'>Reset Password</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='auth-reset-password-cover.html'>Reset Password Cover</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='auth-lock-screen.html'>Lock Screen</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='auth-lock-screen-cover.html'>Lock Screen Cover</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='auth-2fa.html'>2FA</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='auth-2fa-cover.html'>2FA Cover</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='auth-404.html'>404 Page</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='auth-500.html'>500 Page</a></li>
-						</ul>
-					</li>
-					<li class="sidebar-item">
-						<a class='sidebar-link' href='landing.html' target='_blank'>
-              <i class="align-middle" data-lucide="layout-template"></i> <span class="align-middle">Landing</span>
-              <span class="badge badge-sidebar-primary">New</span>
-            </a>
-					</li>
-					<li class="sidebar-item">
-						<a data-bs-target="#docs" data-bs-toggle="collapse" class="sidebar-link collapsed">
-              <i class="align-middle" data-lucide="book-open"></i> <span class="align-middle">Documentation</span>
-            </a>
-						<ul id="docs" class="sidebar-dropdown list-unstyled collapse " data-bs-parent="#sidebar">
-							<li class="sidebar-item"><a class='sidebar-link' href='docs-introduction.html'>Introduction</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='docs-installation.html'>Getting Started</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='docs-customization.html'>Customization</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='docs-plugins.html'>Plugins</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='docs-changelog.html'>Changelog</a></li>
-						</ul>
-					</li>
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Q3ZYEKLQ68"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+        gtag('js', new Date());
+        gtag('config', 'G-Q3ZYEKLQ68');
+    </script>
+</head>
 
-					<li class="sidebar-header">
-						Tools & Components
-					</li>
-					<li class="sidebar-item">
-						<a data-bs-target="#ui" data-bs-toggle="collapse" class="sidebar-link collapsed">
-              <i class="align-middle" data-lucide="grid"></i> <span class="align-middle">UI Elements</span>
-            </a>
-						<ul id="ui" class="sidebar-dropdown list-unstyled collapse " data-bs-parent="#sidebar">
-							<li class="sidebar-item"><a class='sidebar-link' href='ui-alerts.html'>Alerts</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='ui-buttons.html'>Buttons</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='ui-cards.html'>Cards</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='ui-carousel.html'>Carousel</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='ui-embed-video.html'>Embed Video</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='ui-general.html'>General <span class="badge badge-sidebar-primary">10+</span></a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='ui-grid.html'>Grid</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='ui-modals.html'>Modals</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='ui-offcanvas.html'>Offcanvas</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='ui-placeholders.html'>Placeholders</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='ui-tabs.html'>Tabs</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='ui-typography.html'>Typography</a></li>
-						</ul>
-					</li>
-					<li class="sidebar-item">
-						<a data-bs-target="#icons" data-bs-toggle="collapse" class="sidebar-link collapsed">
-              <i class="align-middle" data-lucide="heart"></i> <span class="align-middle">Icons</span>
-              <span class="badge badge-sidebar-primary">1500+</span>
-            </a>
-						<ul id="icons" class="sidebar-dropdown list-unstyled collapse " data-bs-parent="#sidebar">
-							<li class="sidebar-item"><a class='sidebar-link' href='icons-lucide.html'>Lucide</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='icons-font-awesome.html'>Font Awesome</a></li>
-						</ul>
-					</li>
-					<li class="sidebar-item">
-						<a data-bs-target="#forms" data-bs-toggle="collapse" class="sidebar-link collapsed">
-              <i class="align-middle" data-lucide="check-square"></i> <span class="align-middle">Forms</span>
-            </a>
-						<ul id="forms" class="sidebar-dropdown list-unstyled collapse " data-bs-parent="#sidebar">
-							<li class="sidebar-item"><a class='sidebar-link' href='forms-layouts.html'>Layouts</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='forms-basic-inputs.html'>Basic Inputs</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='forms-input-groups.html'>Input Groups</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='forms-floating-labels.html'>Floating Labels</a></li>
-						</ul>
-					</li>
-					<li class="sidebar-item">
-						<a class='sidebar-link' href='tables.html'>
-              <i class="align-middle" data-lucide="list"></i> <span class="align-middle">Tables</span>
-            </a>
-					</li>
+<body data-theme="default" data-layout="fluid" data-sidebar-position="left" data-sidebar-behavior="sticky">
+    <div class="wrapper">
+       <!-- Enhanced Sidebar Navigation -->
+       <nav id="sidebar" class="sidebar">
+       	<div class="sidebar-content js-simplebar">
+       		<!-- Logo Section -->
+       		<a class="sidebar-brand" href="home.php" title="Vuvaa Lifestyle Dashboard">
+       			<img src="img/logo.png" alt="Vuvaa Logo">
+       		</a>
 
-					<li class="sidebar-header">
-						Plugins & Addons
-					</li>
-					<li class="sidebar-item">
-						<a data-bs-target="#forms-plugins" data-bs-toggle="collapse" class="sidebar-link collapsed">
-              <i class="align-middle" data-lucide="check-square"></i> <span class="align-middle">Form Plugins</span>
-            </a>
-						<ul id="forms-plugins" class="sidebar-dropdown list-unstyled collapse " data-bs-parent="#sidebar">
-							<li class="sidebar-item"><a class='sidebar-link' href='forms-advanced-inputs.html'>Advanced Inputs</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='forms-editors.html'>Editors</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='forms-validation.html'>Validation</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='forms-wizard.html'>Wizard</a></li>
-						</ul>
-					</li>
-					<li class="sidebar-item">
-						<a data-bs-target="#datatables" data-bs-toggle="collapse" class="sidebar-link collapsed">
-              <i class="align-middle" data-lucide="list"></i> <span class="align-middle">DataTables</span>
-            </a>
-						<ul id="datatables" class="sidebar-dropdown list-unstyled collapse " data-bs-parent="#sidebar">
-							<li class="sidebar-item"><a class='sidebar-link' href='datatables-responsive.html'>Responsive Table</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='datatables-buttons.html'>Table with Buttons</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='datatables-column-search.html'>Column Search</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='datatables-fixed-header.html'>Fixed Header</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='datatables-multi.html'>Multi Selection</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='datatables-ajax.html'>Ajax Sourced Data</a></li>
-						</ul>
-					</li>
+       		<!-- Navigation Menu -->
+       		<ul class="sidebar-nav">
+       			<!-- Dashboard Link -->
+       			<li class="sidebar-item">
+       				<a href="home" class="sidebar-link sidebar-link-active" title="Dashboard">
+       					<i class="fa fa-tachometer" aria-hidden="true"></i>
+       					<span class="align-middle">Dashboard</span>
+       				</a>
+       			</li>
 
-					<li class="sidebar-item">
-						<a data-bs-target="#charts" data-bs-toggle="collapse" class="sidebar-link collapsed">
-              <i class="align-middle" data-lucide="pie-chart"></i> <span class="align-middle">Charts</span>
-              <span class="badge badge-sidebar-primary">New</span>
-            </a>
-						<ul id="charts" class="sidebar-dropdown list-unstyled collapse " data-bs-parent="#sidebar">
-							<li class="sidebar-item"><a class='sidebar-link' href='charts-chartjs.html'>Chart.js</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='charts-apexcharts.html'>ApexCharts <span class="badge badge-sidebar-primary">New</span></a></li>
-						</ul>
-					</li>
-					<li class="sidebar-item">
-						<a class='sidebar-link' href='notifications.html'>
-              <i class="align-middle" data-lucide="bell"></i> <span class="align-middle">Notifications</span>
-            </a>
-					</li>
-					<li class="sidebar-item">
-						<a data-bs-target="#maps" data-bs-toggle="collapse" class="sidebar-link collapsed">
-              <i class="align-middle" data-lucide="map-pin"></i> <span class="align-middle">Maps</span>
-            </a>
-						<ul id="maps" class="sidebar-dropdown list-unstyled collapse " data-bs-parent="#sidebar">
-							<li class="sidebar-item"><a class='sidebar-link' href='maps-google.html'>Google Maps</a></li>
-							<li class="sidebar-item"><a class='sidebar-link' href='maps-vector.html'>Vector Maps</a></li>
-						</ul>
-					</li>
-					<li class="sidebar-item">
-						<a data-bs-target="#multi" data-bs-toggle="collapse" class="sidebar-link collapsed">
-              <i class="align-middle" data-lucide="share-2"></i> <span class="align-middle">Multi Level</span>
-            </a>
-						<ul id="multi" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
-							<li class="sidebar-item">
-								<a data-bs-target="#multi-2" data-bs-toggle="collapse" class="sidebar-link collapsed">
-                  Two Levels
+       			<!-- Dynamic Menu Items -->
+       			<?php foreach ($menu_list as $value) : ?>
+       			<?php if ($value['has_sub_menu'] == false) : ?>
+       			<li class="sidebar-item">
+       				<a href="javascript:getpage('<?php echo $value['menu_url'] ?>','page')" class="sidebar-link"
+       					title="<?php echo ucfirst($value['menu_name']) ?>">
+       					<i class="fa fa-<?php 
+                                // Assign appropriate icons based on menu name
+                                $menu_name = strtolower($value['menu_name']);
+                                if (strpos($menu_name, 'user') !== false) echo 'users';
+                                elseif (strpos($menu_name, 'church') !== false) echo 'church';
+                                elseif (strpos($menu_name, 'finance') !== false || strpos($menu_name, 'money') !== false) echo 'money';
+                                elseif (strpos($menu_name, 'report') !== false) echo 'chart-bar';
+                                elseif (strpos($menu_name, 'setting') !== false) echo 'cog';
+                                elseif (strpos($menu_name, 'member') !== false) echo 'group';
+                                elseif (strpos($menu_name, 'tithe') !== false) echo 'leaf';
+                                elseif (strpos($menu_name, 'offering') !== false) echo 'gift';
+                                elseif (strpos($menu_name, 'project') !== false) echo 'building';
+                                elseif (strpos($menu_name, 'donation') !== false) echo 'heart';
+                                elseif (strpos($money_name, 'transaction') !== false) echo 'exchange-alt';
+                                else echo 'circle';
+                            ?>" aria-hidden="true"></i>
+       					<span class="align-middle"><?php echo ucfirst($value['menu_name']) ?></span>
+       				</a>
+       			</li>
+       			<?php elseif ($value['has_sub_menu'] == true) : ?>
+       			<li class="sidebar-item" id="menu-<?php echo $value['menu_id'] ?>">
+       				<a data-bs-target="#submenu-<?php echo $value['menu_id'] ?>" data-bs-toggle="collapse"
+       					class="sidebar-link collapsed" aria-expanded="false"
+       					title="<?php echo ucfirst($value['menu_name']) ?>">
+       					<i class="fa fa-<?php 
+                                // Assign appropriate icons for parent menus
+                                $menu_name = strtolower($value['menu_name']);
+                                if (strpos($menu_name, 'admin') !== false) echo 'shield';
+                                elseif (strpos($menu_name, 'setup') !== false) echo 'cogs';
+                                elseif (strpos($menu_name, 'pay') !== false) echo 'credit-card';
+                                elseif (strpos($menu_name, 'report') !== false) echo 'chart-line';
+                                elseif (strpos($menu_name, 'system') !== false) echo 'cogs';
+                                else echo 'folder';
+                            ?>" aria-hidden="true"></i>
+       					<span class="align-middle"><?php echo ucfirst($value['menu_name']) ?></span>
+       				</a>
+       				<ul id="submenu-<?php echo $value['menu_id'] ?>" class="sidebar-dropdown list-unstyled collapse"
+       					data-bs-parent="#sidebar">
+       					<?php foreach ($value['sub_menu'] as $sub_item) : ?>
+       					<li class="sidebar-item" id="submenu-item-<?php echo $sub_item['menu_id'] ?>">
+       						<a class="sidebar-link"
+       							href="javascript:loadNavPage('<?php echo $sub_item['menu_url'] ?>','page', '<?php echo $sub_item['menu_id'] ?>')"
+       							title="<?php echo ucfirst($sub_item['name']) ?>">
+       							<i class="fa fa-angle-right" aria-hidden="true"></i>
+       							<span><?php echo ucfirst($sub_item['name']) ?></span>
+       						</a>
+       					</li>
+       					<?php endforeach; ?>
+       				</ul>
+       			</li>
+       			<?php endif; ?>
+       			<?php endforeach; ?>
+       		</ul>
+
+       		<!-- User Profile Section -->
+       		<div class="sidebar-bottom d-none d-lg-block">
+       			<div class="user-profile-section">
+       				<div class="media">
+       					<div class="user-avatar-container">
+       						<img class="rounded-circle user-avatar" src="<?php echo $_SESSION['photo_path_sess']; ?>"
+       							alt="<?php echo $_SESSION['firstname_sess'] . ' ' . $_SESSION['lastname_sess']; ?>"
+       							width="40" height="40" onerror="this.src='img/avatars/avatar.jpg'">
+       						<div class="user-status-indicator"></div>
+       					</div>
+       					<div class="media-body">
+       						<h6 class="user-name mb-1">
+       							<?php echo $_SESSION['firstname_sess'] . ' ' . $_SESSION['lastname_sess']; ?>
+       						</h6>
+       						<p class="user-role mb-2">
+       							<?php echo $_SESSION['role_id_name']; ?>
+       						</p>
+       						<div class="user-actions">
+       							<button class="btn btn-outline-light btn-sm profile-btn"
+       								onclick="getpage('profile.php','page')" title="View Profile">
+       								<i class="fa fa-user" aria-hidden="true"></i>
+       								Profile
+       							</button>
+       							<button class="btn btn-danger btn-sm logout-btn" onclick="confirmLogout()"
+       								title="Sign Out">
+       								<i class="fa fa-sign-out-alt" aria-hidden="true"></i>
+       								Logout
+       							</button>
+       						</div>
+       					</div>
+       				</div>
+       			</div>
+       		</div>
+       	</div>
+       </nav>
+
+        <div class="main">
+            <nav class="navbar navbar-expand navbar-light navbar-bg">
+                <a class="sidebar-toggle">
+                    <i class="hamburger align-self-center"></i>
                 </a>
-								<ul id="multi-2" class="sidebar-dropdown list-unstyled collapse">
-									<li class="sidebar-item">
-										<a class="sidebar-link" data-bs-target="#">Item 1</a>
-										<a class="sidebar-link" data-bs-target="#">Item 2</a>
-									</li>
-								</ul>
-							</li>
-							<li class="sidebar-item">
-								<a data-bs-target="#multi-3" data-bs-toggle="collapse" class="sidebar-link collapsed">
-                  Three Levels
+
+                <a href="javascript:void(0)" class="d-flex mr-2">
+                    <?php $state_loc = ":" . $dbobject->getitemlabel('lga', 'stateid', $_SESSION['state_id_sess'], 'State'); ?>
+                    Your Role: &nbsp; 
+                    <span style="font-weight:bold; color:#000">
+                        <?php 
+                        echo $_SESSION['role_id_name'];
+                        echo ($_SESSION['role_id_sess'] != '001') ? " from " . $_SESSION['church_name_sess'] : "";
+                        echo " <small style='font-size:10px; color:red'>(" . $dbobject->getitemlabel('church_type', 'id', $_SESSION['church_type_id_sess'], 'name') . ")" . $state_loc . "</small>"; 
+                        ?>
+                    </span>
                 </a>
-								<ul id="multi-3" class="sidebar-dropdown list-unstyled collapse">
-									<li class="sidebar-item">
-										<a data-bs-target="#multi-3-1" data-bs-toggle="collapse" class="sidebar-link collapsed">
-                      Item 1
-                    </a>
-										<ul id="multi-3-1" class="sidebar-dropdown list-unstyled collapse">
-											<li class="sidebar-item">
-												<a class="sidebar-link" data-bs-target="#">Item 1</a>
-												<a class="sidebar-link" data-bs-target="#">Item 2</a>
-											</li>
-										</ul>
-									</li>
-									<li class="sidebar-item">
-										<a class="sidebar-link" data-bs-target="#">Item 2</a>
-									</li>
-								</ul>
-							</li>
-						</ul>
-					</li>
-				</ul>
 
-				<div class="sidebar-cta">
-					<div class="sidebar-cta-content">
-						<strong class="d-inline-block mb-2">Monthly Sales Report</strong>
-						<div class="mb-3 text-sm">
-							Your monthly sales report is ready for download!
-						</div>
+                <div class="navbar-collapse collapse">
+                    <ul class="navbar-nav navbar-align">
+                        <li class="nav-item dropdown">
+                            <a class="nav-icon dropdown-toggle d-inline-block d-sm-none" href="#" data-bs-toggle="dropdown">
+                                <i class="align-middle" data-feather="settings"></i>
+                            </a>
 
-						<div class="d-grid">
-							<a href="https://themes.getbootstrap.com/product/appstack-responsive-admin-template/" class="btn btn-primary" target="_blank">Download</a>
-						</div>
-					</div>
-				</div>
-			</div>
-		</nav>
-		<div class="main">
-			<nav class="navbar navbar-expand navbar-bg">
-				<a class="sidebar-toggle">
-          <i class="hamburger align-self-center"></i>
-        </a>
+                            <a class="nav-link dropdown-toggle d-none d-sm-inline-block" href="#" data-bs-toggle="dropdown">
+                                <img src="<?php echo $_SESSION['photo_path_sess'] ?>" 
+                                     class="avatar img-fluid rounded-circle mr-1" 
+                                     alt="<?php echo $_SESSION['firstname_sess'] . ' ' . $_SESSION['lastname_sess']; ?>" />
+                                <span class="text-dark">
+                                    <?php echo $_SESSION['firstname_sess'] . ' ' . $_SESSION['lastname_sess']; ?>
+                                </span>
+                            </a>
+                            
+                            <div class="dropdown-menu dropdown-menu-end">
+                                <a class="dropdown-item" href="javascript:getpage('profile.php','page')">
+                                    <i class="align-middle mr-1" data-feather="user"></i> Profile
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="logout.php">Sign out</a>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </nav><?php exit() ?>
 
-				<form class="d-none d-sm-inline-block">
-					<div class="input-group input-group-navbar">
-						<input type="text" class="form-control" placeholder="Search projects…" aria-label="Search">
-						<button class="btn" type="button">
-              <i class="align-middle" data-lucide="search"></i>
-            </button>
-					</div>
-				</form>
+            <main class="content" id="page">
+                <?php
+                // Check if registration is incomplete and show complete registration form
+                if ($registration_complete != 1) {
+                    include('complete_onboarding.php');
+                } elseif ($_SESSION['role_id_sess'] == "003" && ($user_det[0]['account_no'] == "00000000000" || $user_det[0]['bank_name'] == "00")) {
+                    include('setup/pastor_bank_details.php');
+                } else {
+                ?>
+                <div class="row owl-carousel" id="">
+                    <div class="col-12 col-sm-6 col-xl d-flex">
+                        <div class="card flex-fill">
+                            <div class="card-body py-4">
+                                <div class="media">
+                                    <div class="d-inline-block mt-2 mr-3">
+                                        <i class="fa fa-tree text-info" style="font-size:35px"></i>
+                                    </div>
+                                    <div class="media-body">
+                                        <h3 class="mb-2">2.562</h3>
+                                        <div class="mb-0">Tithe</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-12 col-sm-6 col-xl d-flex">
+                        <div class="card flex-fill">
+                            <div class="card-body py-4">
+                                <div class="media">
+                                    <div class="d-inline-block mt-2 mr-3">
+                                        <i class="fa fa-shopping-basket text-warning" style="font-size:35px"></i>
+                                    </div>
+                                    <div class="media-body">
+                                        <h3 class="mb-2">17.212</h3>
+                                        <div class="mb-0">Offering</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-12 col-sm-6 col-xl d-flex">
+                        <div class="card flex-fill">
+                            <div class="card-body py-4">
+                                <div class="media">
+                                    <div class="d-inline-block mt-2 mr-3">
+                                        <i class="fa fa-building text-success" style="font-size:35px"></i>
+                                    </div>
+                                    <div class="media-body">
+                                        <h3 class="mb-2">$ 24.300</h3>
+                                        <div class="mb-0">Projects</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-12 col-sm-6 col-xl d-flex">
+                        <div class="card flex-fill">
+                            <div class="card-body py-4">
+                                <div class="media">
+                                    <div class="d-inline-block mt-2 mr-3">
+                                        <i class="fa fa-money text-danger" style="font-size:35px"></i>
+                                    </div>
+                                    <div class="media-body">
+                                        <h3 class="mb-2">43</h3>
+                                        <div class="mb-0">Donations</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-12 col-sm-6 col-xl d-none d-xxl-flex">
+                        <div class="card flex-fill">
+                            <div class="card-body py-4">
+                                <div class="media">
+                                    <div class="d-inline-block mt-2 mr-3">
+                                        <i class="feather-lg text-info" data-feather="dollar-sign"></i>
+                                    </div>
+                                    <div class="media-body">
+                                        <h3 class="mb-2">$ 18.700</h3>
+                                        <div class="mb-0">Evangelism</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-				<ul class="navbar-nav">
-					<li class="nav-item px-2 dropdown d-none d-sm-inline-block">
-						<a class="nav-link dropdown-toggle" href="#" id="servicesDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              Mega menu
-            </a>
-						<div class="dropdown-menu dropdown-menu-start dropdown-mega" aria-labelledby="servicesDropdown">
-							<div class="d-md-flex align-items-start justify-content-start">
-								<div class="dropdown-mega-list">
-									<div class="dropdown-header">UI Elements</div>
-									<a class="dropdown-item" href="#">Alerts</a>
-									<a class="dropdown-item" href="#">Buttons</a>
-									<a class="dropdown-item" href="#">Cards</a>
-									<a class="dropdown-item" href="#">Carousel</a>
-									<a class="dropdown-item" href="#">General</a>
-									<a class="dropdown-item" href="#">Grid</a>
-									<a class="dropdown-item" href="#">Modals</a>
-									<a class="dropdown-item" href="#">Tabs</a>
-									<a class="dropdown-item" href="#">Typography</a>
-								</div>
-								<div class="dropdown-mega-list">
-									<div class="dropdown-header">Forms</div>
-									<a class="dropdown-item" href="#">Layouts</a>
-									<a class="dropdown-item" href="#">Basic Inputs</a>
-									<a class="dropdown-item" href="#">Input Groups</a>
-									<a class="dropdown-item" href="#">Advanced Inputs</a>
-									<a class="dropdown-item" href="#">Editors</a>
-									<a class="dropdown-item" href="#">Validation</a>
-									<a class="dropdown-item" href="#">Wizard</a>
-								</div>
-								<div class="dropdown-mega-list">
-									<div class="dropdown-header">Tables</div>
-									<a class="dropdown-item" href="#">Basic Tables</a>
-									<a class="dropdown-item" href="#">Responsive Table</a>
-									<a class="dropdown-item" href="#">Table with Buttons</a>
-									<a class="dropdown-item" href="#">Column Search</a>
-									<a class="dropdown-item" href="#">Muulti Selection</a>
-									<a class="dropdown-item" href="#">Ajax Sourced Data</a>
-								</div>
-							</div>
-						</div>
-					</li>
-				</ul>
+                <div class="row">
+                    <div class="col-12 col-lg-8 d-flex">
+                        <div class="card flex-fill w-100">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Total Revenue</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart chart-lg">
+                                    <canvas id="chartjs-dashboard-line"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-12 col-lg-4 d-flex">
+                        <div class="card flex-fill w-100">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Pie Distribution</h5>
+                            </div>
+                            <div class="card-body d-flex">
+                                <div class="align-self-center w-100">
+                                    <div class="py-3">
+                                        <div class="chart chart-xs">
+                                            <canvas id="chartjs-dashboard-pie"></canvas>
+                                        </div>
+                                    </div>
 
-				<div class="navbar-collapse collapse">
-					<ul class="navbar-nav navbar-align">
-						<li class="nav-item dropdown">
-							<a class="nav-icon dropdown-toggle" href="#" id="messagesDropdown" data-bs-toggle="dropdown">
-								<div class="position-relative">
-									<i class="align-middle text-body" data-lucide="message-circle"></i>
-									<span class="indicator">4</span>
-								</div>
-							</a>
-							<div class="dropdown-menu dropdown-menu-lg dropdown-menu-end py-0" aria-labelledby="messagesDropdown">
-								<div class="dropdown-menu-header">
-									<div class="position-relative">
-										4 New Messages
-									</div>
-								</div>
-								<div class="list-group">
-									<a href="#" class="list-group-item">
-										<div class="row g-0 align-items-center">
-											<div class="col-2">
-												<img src="img/avatars/avatar-5.jpg" class="img-fluid rounded-circle" alt="Ashley Briggs" width="40" height="40">
-											</div>
-											<div class="col-10 ps-2">
-												<div>Ashley Briggs</div>
-												<div class="text-muted small mt-1">Nam pretium turpis et arcu. Duis arcu tortor.</div>
-												<div class="text-muted small mt-1">15m ago</div>
-											</div>
-										</div>
-									</a>
-									<a href="#" class="list-group-item">
-										<div class="row g-0 align-items-center">
-											<div class="col-2">
-												<img src="img/avatars/avatar-2.jpg" class="img-fluid rounded-circle" alt="Carl Jenkins" width="40" height="40">
-											</div>
-											<div class="col-10 ps-2">
-												<div>Carl Jenkins</div>
-												<div class="text-muted small mt-1">Curabitur ligula sapien euismod vitae.</div>
-												<div class="text-muted small mt-1">2h ago</div>
-											</div>
-										</div>
-									</a>
-									<a href="#" class="list-group-item">
-										<div class="row g-0 align-items-center">
-											<div class="col-2">
-												<img src="img/avatars/avatar-4.jpg" class="img-fluid rounded-circle" alt="Stacie Hall" width="40" height="40">
-											</div>
-											<div class="col-10 ps-2">
-												<div>Stacie Hall</div>
-												<div class="text-muted small mt-1">Pellentesque auctor neque nec urna.</div>
-												<div class="text-muted small mt-1">4h ago</div>
-											</div>
-										</div>
-									</a>
-									<a href="#" class="list-group-item">
-										<div class="row g-0 align-items-center">
-											<div class="col-2">
-												<img src="img/avatars/avatar-3.jpg" class="img-fluid rounded-circle" alt="Bertha Martin" width="40" height="40">
-											</div>
-											<div class="col-10 ps-2">
-												<div>Bertha Martin</div>
-												<div class="text-muted small mt-1">Aenean tellus metus, bibendum sed, posuere ac, mattis non.</div>
-												<div class="text-muted small mt-1">5h ago</div>
-											</div>
-										</div>
-									</a>
-								</div>
-								<div class="dropdown-menu-footer">
-									<a href="#" class="text-muted">Show all messages</a>
-								</div>
-							</div>
-						</li>
-						<li class="nav-item dropdown">
-							<a class="nav-icon dropdown-toggle" href="#" id="alertsDropdown" data-bs-toggle="dropdown">
-								<div class="position-relative">
-									<i class="align-middle text-body" data-lucide="bell-off"></i>
-								</div>
-							</a>
-							<div class="dropdown-menu dropdown-menu-lg dropdown-menu-end py-0" aria-labelledby="alertsDropdown">
-								<div class="dropdown-menu-header">
-									4 New Notifications
-								</div>
-								<div class="list-group">
-									<a href="#" class="list-group-item">
-										<div class="row g-0 align-items-center">
-											<div class="col-2">
-												<i class="text-danger" data-lucide="alert-circle"></i>
-											</div>
-											<div class="col-10">
-												<div>Update completed</div>
-												<div class="text-muted small mt-1">Restart server 12 to complete the update.</div>
-												<div class="text-muted small mt-1">2h ago</div>
-											</div>
-										</div>
-									</a>
-									<a href="#" class="list-group-item">
-										<div class="row g-0 align-items-center">
-											<div class="col-2">
-												<i class="text-warning" data-lucide="bell"></i>
-											</div>
-											<div class="col-10">
-												<div>Lorem ipsum</div>
-												<div class="text-muted small mt-1">Aliquam ex eros, imperdiet vulputate hendrerit et.</div>
-												<div class="text-muted small mt-1">6h ago</div>
-											</div>
-										</div>
-									</a>
-									<a href="#" class="list-group-item">
-										<div class="row g-0 align-items-center">
-											<div class="col-2">
-												<i class="text-primary" data-lucide="home"></i>
-											</div>
-											<div class="col-10">
-												<div>Login from 192.186.1.1</div>
-												<div class="text-muted small mt-1">8h ago</div>
-											</div>
-										</div>
-									</a>
-									<a href="#" class="list-group-item">
-										<div class="row g-0 align-items-center">
-											<div class="col-2">
-												<i class="text-success" data-lucide="user-plus"></i>
-											</div>
-											<div class="col-10">
-												<div>New connection</div>
-												<div class="text-muted small mt-1">Anna accepted your request.</div>
-												<div class="text-muted small mt-1">12h ago</div>
-											</div>
-										</div>
-									</a>
-								</div>
-								<div class="dropdown-menu-footer">
-									<a href="#" class="text-muted">Show all notifications</a>
-								</div>
-							</div>
-						</li>
-						<li class="nav-item nav-theme-toggle dropdown">
-							<a class="nav-icon js-theme-toggle" href="#">
-								<div class="position-relative">
-									<i class="align-middle text-body nav-theme-toggle-light" data-lucide="sun"></i>
-									<i class="align-middle text-body nav-theme-toggle-dark" data-lucide="moon"></i>
-								</div>
-							</a>
-						</li>
-						<li class="nav-item dropdown">
-							<a class="nav-flag dropdown-toggle" href="#" id="languageDropdown" data-bs-toggle="dropdown">
-                <img src="img/flags/us.png" alt="English" />
-              </a>
-							<div class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
-								<a class="dropdown-item" href="#">
-                  <img src="img/flags/us.png" alt="English" width="20" class="align-middle me-1" />
-                  <span class="align-middle">English</span>
-                </a>
-								<a class="dropdown-item" href="#">
-                  <img src="img/flags/es.png" alt="Spanish" width="20" class="align-middle me-1" />
-                  <span class="align-middle">Spanish</span>
-                </a>
-								<a class="dropdown-item" href="#">
-                  <img src="img/flags/de.png" alt="German" width="20" class="align-middle me-1" />
-                  <span class="align-middle">German</span>
-                </a>
-								<a class="dropdown-item" href="#">
-                  <img src="img/flags/nl.png" alt="Dutch" width="20" class="align-middle me-1" />
-                  <span class="align-middle">Dutch</span>
-                </a>
-							</div>
-						</li>
-						<li class="nav-item dropdown">
-							<a class="nav-icon dropdown-toggle d-inline-block d-sm-none" href="#" data-bs-toggle="dropdown">
-                <i class="align-middle" data-lucide="settings"></i>
-              </a>
+                                    <table class="table mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Source</th>
+                                                <th class="text-right">Revenue</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tfive">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-							<a class="nav-link dropdown-toggle d-none d-sm-inline-block" href="#" data-bs-toggle="dropdown">
-                <img src="img/avatars/avatar.jpg" class="img-fluid rounded-circle me-1 mt-n2 mb-n2" alt="Chris Wood" width="40" height="40"/> <span>Chris Wood</span>
-              </a>
-							<div class="dropdown-menu dropdown-menu-end">
-								<a class='dropdown-item' href='pages-profile.html'><i class="align-middle me-1" data-lucide="user"></i> Profile</a>
-								<a class="dropdown-item" href="#"><i class="align-middle me-1" data-lucide="pie-chart"></i> Analytics</a>
-								<div class="dropdown-divider"></div>
-								<a class='dropdown-item' href='pages-settings.html'>Settings & Privacy</a>
-								<a class="dropdown-item" href="#">Help</a>
-								<a class="dropdown-item" href="#">Sign out</a>
-							</div>
-						</li>
-					</ul>
-				</div>
-			</nav>
+                <div class="row">
+                    <div class="card flex-fill">
+                        <div class="card-header">
+                            <div class="card-actions float-end">
+                                <div class="dropdown position-relative">
+                                    <a href="#" data-bs-toggle="dropdown" data-bs-display="static">
+                                        <i class="align-middle" data-feather="more-horizontal"></i>
+                                    </a>
+                                    <div class="dropdown-menu dropdown-menu-end">
+                                        <a class="dropdown-item" href="#">Action</a>
+                                        <a class="dropdown-item" href="#">Another action</a>
+                                        <a class="dropdown-item" href="#">Something else here</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <h5 class="card-title mb-0">Latest Projects</h5>
+                        </div>
+                        
+                        <table id="datatables-dashboard-projects" class="table table-striped my-0">
+                            <thead>
+                                <tr role="row">
+                                    <th>Paying Church</th>
+                                    <th>Amount</th>
+                                    <th>Bank</th>
+                                    <th>Account Name</th>
+                                    <th>Account Number</th>
+                                    <th>Payment ID</th>
+                                    <th>Payment Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php
+                                $filter = ($_SESSION['role_id_sess'] == 001) ? "" : " AND church_id = '$_SESSION[church_id_sess]' OR source_acct = '$_SESSION[church_id_sess]'";
+                                $sql = "SELECT * FROM transaction_table WHERE 1 = 1 $filter ORDER BY created desc LIMIT 10";
+                                $result = $dbobject->db_query($sql);
+                                foreach ($result as $row) {
+                                ?>
+                                    <tr>
+                                        <td><?php echo $dbobject->getitemlabel("church_table", "church_id", $row['source_acct'], "church_name"); ?></td>
+                                        <td><?php echo "&#x20a6; " . number_format($row['transaction_amount'], 2); ?></td>
+                                        <td><?php 
+                                            $destination_bank = (isset($row['destination_bank'])) ? $row['destination_bank'] : "";
+                                            echo $dbobject->getitemlabel("banks", "bank_code", $destination_bank, "bank_name"); 
+                                        ?></td>
+                                        <td><?php 
+                                            $account_name = (isset($row['account_name'])) ? $row['account_name'] : "";
+                                            echo $account_name; 
+                                        ?></td>
+                                        <td><?php echo $row['destination_acct']; ?></td>
+                                        <td><?php 
+                                            $payment_id = (isset($row['payment_id'])) ? $row['payment_id'] : "";
+                                            echo $payment_id; 
+                                        ?></td>
+                                        <td><?php echo $row['response_message']; ?></td>
+                                    </tr>
+                                <?php
+                                }
+                                ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <?php
+                }
+                ?>
+            </main>
 
-			<main class="content">
-				<div class="container-fluid p-0">
+            <footer class="footer">
+                <div class="container-fluid">
+                    <div class="row text-muted">
+                        <div class="col-6 text-left">
+                            <ul class="list-inline">
+                                <li class="list-inline-item">
+                                    <a class="text-muted" href="#">Help Center</a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-6 text-right">
+                            <p class="mb-0">
+                                &copy; <?php echo date('Y'); ?> - 
+                                <a target="_blank" href="home.php" class="text-muted">Vuvaa Lifestyle Website</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </footer>
 
-					<div class="row mb-2 mb-xl-3">
-						<div class="col-auto d-none d-sm-block">
-							<h3>Dashboard</h3>
-						</div>
+            <div class="modal fade" id="defaultModalPrimary" tabindex="-1" role="dialog" aria-hidden="true" 
+                 data-bs-backdrop="static" data-bs-keyboard="false">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content" id="modal_div">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Default modal</h5>
+                            <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">×</span>
+                            </button>
+                        </div>
+                        <div class="modal-body m-3">
+                            <p class="mb-0">Use Bootstrap's JavaScript modal plugin to add dialogs to your site for lightboxes, user notifications, or completely custom content.</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary">Save changes</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+			
 
-						<div class="col-auto ms-auto text-end mt-n1">
+    <!-- Scripts -->
+    <script src="js/app.js"></script>
+    <script src="js/sweet_alerts.js"></script>
+    <script src="js/jquery.blockUI.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/parsely.js"></script>
+    <script src="js/owl.carousel.js"></script>
+	<script src="js/chart.min.js"></script>
 
-							<div class="dropdown me-2 d-inline-block position-relative">
-								<a class="btn btn-light bg-white shadow-sm dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-display="static">
-        <i class="align-middle mt-n1" data-lucide="calendar"></i> Today
-      </a>
+    <script>
+        $(document).ready(function() {
+            // Load dashboard data
+            $.post('utilities.php', {
+                op: 'Dashboard.topFiveChurches'
+            }, function(dd) {
+                $("#tfive").html(dd.topfive);
+                new Chart(document.getElementById("chartjs-dashboard-pie"), dd.pie);
+            }, 'json');
+            
+            $.post('utilities.php', {
+                op: 'Dashboard.remittance'
+            }, function(dd) {
+                console.log('record from dashboard ', dd);
+                new Chart(document.getElementById("chartjs-dashboard-line"), dd);
+            }, 'json');
 
-								<div class="dropdown-menu dropdown-menu-end">
-									<h6 class="dropdown-header">Settings</h6>
-									<a class="dropdown-item" href="#">Action</a>
-									<a class="dropdown-item" href="#">Another action</a>
-									<a class="dropdown-item" href="#">Something else here</a>
-									<div class="dropdown-divider"></div>
-									<a class="dropdown-item" href="#">Separated link</a>
-								</div>
-							</div>
+            // Initialize carousel
+            $("#carousel_div").owlCarousel({
+                jsonPath: "utilities.php?op=Dashboard.carousel",
+                items: 4,
+                navigation: true
+            });
+        });
+    </script>
 
-							<button class="btn btn-primary shadow-sm">
-      <i class="align-middle" data-lucide="filter">&nbsp;</i>
-    </button>
-							<button class="btn btn-primary shadow-sm">
-      <i class="align-middle" data-lucide="refresh-cw">&nbsp;</i>
-    </button>
-						</div>
-					</div>
-					<div class="row">
-						<div class="col-12 col-sm-6 col-xxl-3 d-flex">
-							<div class="card illustration flex-fill">
-								<div class="card-body p-0 d-flex flex-fill">
-									<div class="row g-0 w-100">
-										<div class="col-6">
-											<div class="illustration-text p-3 m-1">
-												<h4 class="illustration-text">Welcome Back, Chris!</h4>
-												<p class="mb-0">AppStack Dashboard</p>
-											</div>
-										</div>
-										<div class="col-6 align-self-end text-end">
-											<img src="img/illustrations/customer-support.png" alt="Customer Support" class="img-fluid illustration-img">
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
-						<div class="col-12 col-sm-6 col-xxl-3 d-flex">
-							<div class="card flex-fill">
-								<div class="card-body py-4">
-									<div class="d-flex align-items-start">
-										<div class="flex-grow-1">
-											<h3 class="mb-2">$ 24.300</h3>
-											<p class="mb-2">Total Earnings</p>
-											<div class="mb-0">
-												<span class="badge badge-subtle-success me-2"> +5.35% </span>
-												<span class="text-muted">Since last week</span>
-											</div>
-										</div>
-										<div class="d-inline-block ms-3">
-											<div class="stat">
-												<i class="align-middle text-success" data-lucide="dollar-sign"></i>
-											</div>
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
-						<div class="col-12 col-sm-6 col-xxl-3 d-flex">
-							<div class="card flex-fill">
-								<div class="card-body py-4">
-									<div class="d-flex align-items-start">
-										<div class="flex-grow-1">
-											<h3 class="mb-2">43</h3>
-											<p class="mb-2">Pending Orders</p>
-											<div class="mb-0">
-												<span class="badge badge-subtle-danger me-2"> -4.25% </span>
-												<span class="text-muted">Since last week</span>
-											</div>
-										</div>
-										<div class="d-inline-block ms-3">
-											<div class="stat">
-												<i class="align-middle text-danger" data-lucide="shopping-bag"></i>
-											</div>
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
-						<div class="col-12 col-sm-6 col-xxl-3 d-flex">
-							<div class="card flex-fill">
-								<div class="card-body py-4">
-									<div class="d-flex align-items-start">
-										<div class="flex-grow-1">
-											<h3 class="mb-2">$ 18.700</h3>
-											<p class="mb-2">Total Revenue</p>
-											<div class="mb-0">
-												<span class="badge badge-subtle-success me-2"> +8.65% </span>
-												<span class="text-muted">Since last week</span>
-											</div>
-										</div>
-										<div class="d-inline-block ms-3">
-											<div class="stat">
-												<i class="align-middle text-info" data-lucide="dollar-sign"></i>
-											</div>
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
+    
+       <script>
+       	function confirmLogout() {
+       		Swal.fire({
+       			title: 'Sign Out?',
+       			text: 'Are you sure you want to sign out of your account?',
+       			icon: 'question',
+       			showCancelButton: true,
+       			confirmButtonColor: '#dc2626',
+       			cancelButtonColor: '#6b7280',
+       			confirmButtonText: 'Yes, Sign Out',
+       			cancelButtonText: 'Cancel',
+       			customClass: {
+       				popup: 'logout-confirmation'
+       			}
+       		}).then((result) => {
+       			if (result.isConfirmed) {
+       				// Show loading state
+       				Swal.fire({
+       					title: 'Signing Out...',
+       					text: 'Please wait while we sign you out.',
+       					allowOutsideClick: false,
+       					showConfirmButton: false,
+       					willOpen: () => {
+       						Swal.showLoading();
+       					}
+       				});
 
-					<div class="row">
-						<div class="col-12 col-lg-8 d-flex">
-							<div class="card flex-fill w-100">
-								<div class="card-header">
-									<div class="card-actions float-end">
-										<div class="dropdown position-relative">
-											<a href="#" data-bs-toggle="dropdown" data-bs-display="static">
-              <i class="align-middle" data-lucide="more-horizontal"></i>
-            </a>
+       				// Redirect to logout
+       				setTimeout(() => {
+       					window.location.href = 'logout.php';
+       				}, 1000);
+       			}
+       		});
+       	}
 
-											<div class="dropdown-menu dropdown-menu-end">
-												<a class="dropdown-item" href="#">Action</a>
-												<a class="dropdown-item" href="#">Another action</a>
-												<a class="dropdown-item" href="#">Something else here</a>
-											</div>
-										</div>
-									</div>
-									<h5 class="card-title mb-0">Sales / Revenue</h5>
-								</div>
-								<div class="card-body d-flex w-100">
-									<div class="align-self-center chart chart-lg">
-										<canvas id="chartjs-dashboard-bar"></canvas>
-									</div>
-								</div>
-							</div>
-						</div>
-						<div class="col-12 col-lg-4 d-flex">
-							<div class="card flex-fill w-100">
-								<div class="card-header">
-									<span class="badge bg-info float-end">Today</span>
-									<h5 class="card-title mb-0">Daily feed</h5>
-								</div>
-								<div class="card-body">
-									<div class="d-flex align-items-start">
-										<img src="img/avatars/avatar-5.jpg" width="36" height="36" class="rounded-circle me-2" alt="Ashley Briggs">
-										<div class="flex-grow-1">
-											<small class="float-end">5m ago</small>
-											<strong>Ashley Briggs</strong> started following <strong>Stacie Hall</strong><br />
-											<small class="text-muted">Today 7:51 pm</small><br />
+       	// Add active state management for menu items
+       	document.addEventListener('DOMContentLoaded', function () {
+       		// Remove active class from all menu items
+       		function clearActiveStates() {
+       			document.querySelectorAll('.sidebar-link').forEach(link => {
+       				link.classList.remove('sidebar-link-active');
+       			});
+       		}
 
-										</div>
-									</div>
+       		// Add click handler for menu items
+       		document.querySelectorAll('.sidebar-link').forEach(link => {
+       			link.addEventListener('click', function () {
+       				if (!this.hasAttribute('data-bs-toggle')) {
+       					clearActiveStates();
+       					this.classList.add('sidebar-link-active');
+       				}
+       			});
+       		});
 
-									<hr />
-									<div class="d-flex align-items-start">
-										<img src="img/avatars/avatar.jpg" width="36" height="36" class="rounded-circle me-2" alt="Chris Wood">
-										<div class="flex-grow-1">
-											<small class="float-end">30m ago</small>
-											<strong>Chris Wood</strong> posted something on <strong>Stacie Hall</strong>'s timeline<br />
-											<small class="text-muted">Today 7:21 pm</small>
+       		// Add smooth scrolling for sidebar
+       		const sidebar = document.querySelector('.sidebar-content');
+       		if (sidebar) {
+       			sidebar.style.scrollBehavior = 'smooth';
+       		}
 
-											<div class="border text-sm text-muted p-2 mt-1">
-												Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing...
-											</div>
-										</div>
-									</div>
+       		// Add loading animation for menu items
+       		const menuItems = document.querySelectorAll('.sidebar-item');
+       		menuItems.forEach((item, index) => {
+       			item.style.animationDelay = `${index * 0.1}s`;
+       		});
+       	});
 
-									<hr />
-									<div class="d-flex align-items-start">
-										<img src="img/avatars/avatar-4.jpg" width="36" height="36" class="rounded-circle me-2" alt="Stacie Hall">
-										<div class="flex-grow-1">
-											<small class="float-end">1h ago</small>
-											<strong>Stacie Hall</strong> posted a new blog<br />
+       	// Enhanced mobile menu toggle
+       	function toggleMobileMenu() {
+       		const sidebar = document.getElementById('sidebar');
+       		sidebar.classList.toggle('sidebar-mobile-open');
+       	}
 
-											<small class="text-muted">Today 6:35 pm</small>
-										</div>
-									</div>
-
-									<hr />
-									<div class="d-grid">
-										<a href="#" class="btn btn-primary">Load more</a>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-
-					<div class="row">
-						<div class="col-12 col-lg-6 col-xl-4 d-flex">
-							<div class="card flex-fill">
-								<div class="card-header">
-									<div class="card-actions float-end">
-										<div class="dropdown position-relative">
-											<a href="#" data-bs-toggle="dropdown" data-bs-display="static">
-              <i class="align-middle" data-lucide="more-horizontal"></i>
-            </a>
-
-											<div class="dropdown-menu dropdown-menu-end">
-												<a class="dropdown-item" href="#">Action</a>
-												<a class="dropdown-item" href="#">Another action</a>
-												<a class="dropdown-item" href="#">Something else here</a>
-											</div>
-										</div>
-									</div>
-									<h5 class="card-title mb-0">Calendar</h5>
-								</div>
-								<div class="card-body d-flex">
-									<div class="align-self-center w-100">
-										<div class="chart">
-											<div id="calendar-dashboard"></div>
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
-						<div class="col-12 col-xl-4 d-none d-xl-flex">
-							<div class="card flex-fill w-100">
-								<div class="card-header">
-									<div class="card-actions float-end">
-										<div class="dropdown position-relative">
-											<a href="#" data-bs-toggle="dropdown" data-bs-display="static">
-              <i class="align-middle" data-lucide="more-horizontal"></i>
-            </a>
-
-											<div class="dropdown-menu dropdown-menu-end">
-												<a class="dropdown-item" href="#">Action</a>
-												<a class="dropdown-item" href="#">Another action</a>
-												<a class="dropdown-item" href="#">Something else here</a>
-											</div>
-										</div>
-									</div>
-									<h5 class="card-title mb-0">Weekly sales</h5>
-								</div>
-								<div class="card-body d-flex">
-									<div class="align-self-center w-100">
-										<div class="py-3">
-											<div class="chart chart-xs">
-												<canvas id="chartjs-dashboard-pie"></canvas>
-											</div>
-										</div>
-
-										<table class="table mb-0">
-											<thead>
-												<tr>
-													<th>Source</th>
-													<th class="text-end">Revenue</th>
-													<th class="text-end">Value</th>
-												</tr>
-											</thead>
-											<tbody>
-												<tr>
-													<td><i class="fas fa-square-full text-primary"></i> Direct</td>
-													<td class="text-end">$ 2602</td>
-													<td class="text-end text-success">+43%</td>
-												</tr>
-												<tr>
-													<td><i class="fas fa-square-full text-warning"></i> Affiliate</td>
-													<td class="text-end">$ 1253</td>
-													<td class="text-end text-success">+13%</td>
-												</tr>
-												<tr>
-													<td><i class="fas fa-square-full text-danger"></i> E-mail</td>
-													<td class="text-end">$ 541</td>
-													<td class="text-end text-success">+24%</td>
-												</tr>
-												<tr>
-													<td><i class="fas fa-square-full text-dark"></i> Other</td>
-													<td class="text-end">$ 1465</td>
-													<td class="text-end text-success">+11%</td>
-												</tr>
-											</tbody>
-										</table>
-									</div>
-								</div>
-							</div>
-						</div>
-						<div class="col-12 col-lg-6 col-xl-4 d-flex">
-							<div class="card flex-fill w-100">
-								<div class="card-header">
-									<div class="card-actions float-end">
-										<div class="dropdown position-relative">
-											<a href="#" data-bs-toggle="dropdown" data-bs-display="static">
-              <i class="align-middle" data-lucide="more-horizontal"></i>
-            </a>
-
-											<div class="dropdown-menu dropdown-menu-end">
-												<a class="dropdown-item" href="#">Action</a>
-												<a class="dropdown-item" href="#">Another action</a>
-												<a class="dropdown-item" href="#">Something else here</a>
-											</div>
-										</div>
-									</div>
-									<h5 class="card-title mb-0">Appointments</h5>
-								</div>
-								<div class="card-body">
-									<ul class="timeline">
-										<li class="timeline-item">
-											<strong>Chat with Carl and Ashley</strong>
-											<span class="float-end text-muted text-sm">30m ago</span>
-											<p>Nam pretium turpis et arcu. Duis arcu tortor, suscipit eget, imperdiet nec, imperdiet iaculis, ipsum. Sed aliquam ultrices mauris...</p>
-										</li>
-										<li class="timeline-item">
-											<strong>The big launch</strong>
-											<span class="float-end text-muted text-sm">2h ago</span>
-											<p>Sed aliquam ultrices mauris. Integer ante arcu, accumsan a, consectetuer eget, posuere ut, mauris. Praesent adipiscing. Phasellus ullamcorper ipsum rutrum
-												nunc...</p>
-										</li>
-										<li class="timeline-item">
-											<strong>Coffee break</strong>
-											<span class="float-end text-muted text-sm">3h ago</span>
-											<p>Curabitur ligula sapien, tincidunt non, euismod vitae, posuere imperdiet, leo. Maecenas malesuada...</p>
-										</li>
-										<li class="timeline-item">
-											<strong>Chat with team</strong>
-											<span class="float-end text-muted text-sm">30m ago</span>
-											<p>Nam pretium turpis et arcu. Duis arcu tortor, suscipit eget, imperdiet nec, imperdiet iaculis, ipsum...</p>
-										</li>
-									</ul>
-								</div>
-							</div>
-						</div>
-					</div>
-
-					<div class="card flex-fill">
-						<div class="card-header">
-							<div class="card-actions float-end">
-								<div class="dropdown position-relative">
-									<a href="#" data-bs-toggle="dropdown" data-bs-display="static">
-          <i class="align-middle" data-lucide="more-horizontal"></i>
-        </a>
-
-									<div class="dropdown-menu dropdown-menu-end">
-										<a class="dropdown-item" href="#">Action</a>
-										<a class="dropdown-item" href="#">Another action</a>
-										<a class="dropdown-item" href="#">Something else here</a>
-									</div>
-								</div>
-							</div>
-							<h5 class="card-title mb-0">Latest Projects</h5>
-						</div>
-						<table class="table table-borderless my-0">
-							<thead>
-								<tr>
-									<th>Name</th>
-									<th class="d-none d-xxl-table-cell">Company</th>
-									<th class="d-none d-xl-table-cell">Author</th>
-									<th>Status</th>
-									<th class="d-none d-xl-table-cell text-end">Action</th>
-								</tr>
-							</thead>
-							<tbody>
-								<tr>
-									<td>
-										<div class="d-flex">
-											<div class="flex-shrink-0">
-												<div class="bg-body-tertiary rounded-2">
-													<img class="p-2" src="img/brands/brand-1.svg">
-												</div>
-											</div>
-											<div class="flex-grow-1 ms-3">
-												<strong>Project Apollo</strong>
-												<div class="text-muted">
-													Web, UI/UX Design
-												</div>
-											</div>
-										</div>
-									</td>
-									<td class="d-none d-xxl-table-cell">
-										<strong>Gantos</strong>
-										<div class="text-muted">
-											Real Estate
-										</div>
-									</td>
-									<td class="d-none d-xl-table-cell">
-										<strong>Carl Jenkins</strong>
-										<div class="text-muted">
-											HTML, JS, React
-										</div>
-									</td>
-									<td>
-										<div class="d-flex flex-column w-100">
-											<span class="me-2 mb-1 text-muted">65%</span>
-											<div class="progress progress-sm w-100">
-												<div class="progress-bar bg-success" role="progressbar" style="width: 65%;"></div>
-											</div>
-										</div>
-									</td>
-									<td class="d-none d-xl-table-cell text-end">
-										<a href="#" class="btn btn-light">View</a>
-									</td>
-								</tr>
-								<tr>
-									<td>
-										<div class="d-flex">
-											<div class="flex-shrink-0">
-												<div class="bg-body-tertiary rounded-2">
-													<img class="p-2" src="img/brands/brand-2.svg">
-												</div>
-											</div>
-											<div class="flex-grow-1 ms-3">
-												<strong>Project Bongo</strong>
-												<div class="text-muted">
-													Web
-												</div>
-											</div>
-										</div>
-									</td>
-									<td class="d-none d-xxl-table-cell">
-										<strong>Adray Transportation</strong>
-										<div class="text-muted">
-											Transportation
-										</div>
-									</td>
-									<td class="d-none d-xl-table-cell">
-										<strong>Bertha Martin</strong>
-										<div class="text-muted">
-											HTML, JS, Vue
-										</div>
-									</td>
-									<td>
-										<div class="d-flex flex-column w-100">
-											<span class="me-2 mb-1 text-muted">33%</span>
-											<div class="progress progress-sm w-100">
-												<div class="progress-bar bg-danger" role="progressbar" style="width: 33%;"></div>
-											</div>
-										</div>
-									</td>
-									<td class="d-none d-xl-table-cell text-end">
-										<a href="#" class="btn btn-light">View</a>
-									</td>
-								</tr>
-								<tr>
-									<td>
-										<div class="d-flex">
-											<div class="flex-shrink-0">
-												<div class="bg-body-tertiary rounded-2">
-													<img class="p-2" src="img/brands/brand-3.svg">
-												</div>
-											</div>
-											<div class="flex-grow-1 ms-3">
-												<strong>Project Canary</strong>
-												<div class="text-muted">
-													Web, UI/UX Design
-												</div>
-											</div>
-										</div>
-									</td>
-									<td class="d-none d-xxl-table-cell">
-										<strong>Evans</strong>
-										<div class="text-muted">
-											Insurance
-										</div>
-									</td>
-									<td class="d-none d-xl-table-cell">
-										<strong>Stacie Hall</strong>
-										<div class="text-muted">
-											HTML, JS, Laravel
-										</div>
-									</td>
-									<td>
-										<div class="d-flex flex-column w-100">
-											<span class="me-2 mb-1 text-muted">50%</span>
-											<div class="progress progress-sm w-100">
-												<div class="progress-bar bg-warning" role="progressbar" style="width: 50%;"></div>
-											</div>
-										</div>
-									</td>
-									<td class="d-none d-xl-table-cell text-end">
-										<a href="#" class="btn btn-light">View</a>
-									</td>
-								</tr>
-								<tr>
-									<td>
-										<div class="d-flex">
-											<div class="flex-shrink-0">
-												<div class="bg-body-tertiary rounded-2">
-													<img class="p-2" src="img/brands/brand-4.svg">
-												</div>
-											</div>
-											<div class="flex-grow-1 ms-3">
-												<strong>Project Edison</strong>
-												<div class="text-muted">
-													UI/UX Design
-												</div>
-											</div>
-										</div>
-									</td>
-									<td class="d-none d-xxl-table-cell">
-										<strong>Monsource Investment Group</strong>
-										<div class="text-muted">
-											Finance
-										</div>
-									</td>
-									<td class="d-none d-xl-table-cell">
-										<strong>Carl Jenkins</strong>
-										<div class="text-muted">
-											HTML, JS, React
-										</div>
-									</td>
-									<td>
-										<div class="d-flex flex-column w-100">
-											<span class="me-2 mb-1 text-muted">80%</span>
-											<div class="progress progress-sm w-100">
-												<div class="progress-bar bg-success" role="progressbar" style="width: 80%;"></div>
-											</div>
-										</div>
-									</td>
-									<td class="d-none d-xl-table-cell text-end">
-										<a href="#" class="btn btn-light">View</a>
-									</td>
-								</tr>
-								<tr>
-									<td>
-										<div class="d-flex">
-											<div class="flex-shrink-0">
-												<div class="bg-body-tertiary rounded-2">
-													<img class="p-2" src="img/brands/brand-5.svg">
-												</div>
-											</div>
-											<div class="flex-grow-1 ms-3">
-												<strong>Project Indigo</strong>
-												<div class="text-muted">
-													Web, UI/UX Design
-												</div>
-											</div>
-										</div>
-									</td>
-									<td class="d-none d-xxl-table-cell">
-										<strong>Edwards</strong>
-										<div class="text-muted">
-											Retail
-										</div>
-									</td>
-									<td class="d-none d-xl-table-cell">
-										<strong>Ashley Briggs</strong>
-										<div class="text-muted">
-											HTML, JS, Vue
-										</div>
-									</td>
-									<td>
-										<div class="d-flex flex-column w-100">
-											<span class="me-2 mb-1 text-muted">78%</span>
-											<div class="progress progress-sm w-100">
-												<div class="progress-bar bg-primary" role="progressbar" style="width: 78%;"></div>
-											</div>
-										</div>
-									</td>
-									<td class="d-none d-xl-table-cell text-end">
-										<a href="#" class="btn btn-light">View</a>
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-				</div>
-			</main>
-
-			<footer class="footer">
-				<div class="container-fluid">
-					<div class="row text-muted">
-						<div class="col-6 text-start">
-							<ul class="list-inline">
-								<li class="list-inline-item">
-									<a class="text-muted" href="#">Support</a>
-								</li>
-								<li class="list-inline-item">
-									<a class="text-muted" href="#">Help Center</a>
-								</li>
-								<li class="list-inline-item">
-									<a class="text-muted" href="#">Privacy</a>
-								</li>
-								<li class="list-inline-item">
-									<a class="text-muted" href="#">Terms of Service</a>
-								</li>
-							</ul>
-						</div>
-						<div class="col-6 text-end">
-							<p class="mb-0">
-								&copy; 2024 - <a class='text-muted' href='index.html'>AppStack</a>
-							</p>
-						</div>
-					</div>
-				</div>
-			</footer>
-		</div>
-	</div>
-
-	<script src="js/app.js"></script>
-
-	<script>
-		document.addEventListener("DOMContentLoaded", function() {
-			// Bar chart
-			new Chart(document.getElementById("chartjs-dashboard-bar"), {
-				type: "bar",
-				data: {
-					labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-					datasets: [{
-						label: "Last year",
-						backgroundColor: window.cssVariables.primary,
-						borderColor: window.cssVariables.primary,
-						hoverBackgroundColor: window.cssVariables.primary,
-						hoverBorderColor: window.cssVariables.primary,
-						data: [54, 67, 41, 55, 62, 45, 55, 73, 60, 76, 48, 79],
-						barPercentage: .325,
-						categoryPercentage: .5
-					}, {
-						label: "This year",
-						backgroundColor: window.cssVariables.primarySubtle,
-						borderColor: window.cssVariables.primarySubtle,
-						hoverBackgroundColor: window.cssVariables.primarySubtle,
-						hoverBorderColor: window.cssVariables.primarySubtle,
-						data: [69, 66, 24, 48, 52, 51, 44, 53, 62, 79, 51, 68],
-						barPercentage: .325,
-						categoryPercentage: .5
-					}]
-				},
-				options: {
-					maintainAspectRatio: false,
-					cornerRadius: 15,
-					legend: {
-						display: false
-					},
-					scales: {
-						yAxes: [{
-							gridLines: {
-								display: false
-							},
-							ticks: {
-								stepSize: 20
-							},
-							stacked: true,
-						}],
-						xAxes: [{
-							gridLines: {
-								color: "transparent"
-							},
-							stacked: true,
-						}]
-					}
-				}
-			});
-		});
-	</script>
-	<script>
-		// Workaround for theme switch re-initialization issue
-		var isTempusDominusInitialized = false;
-		document.addEventListener("DOMContentLoaded", function() {
-			if (isTempusDominusInitialized) {
-				return;
-			}
-			isTempusDominusInitialized = true;
-			new tempusDominus.TempusDominus(document.getElementById('calendar-dashboard'), {
-				display: {
-					inline: true,
-					components: {
-						clock: false,
-						hours: false,
-						minutes: false
-					}
-				}
-			});
-		});
-	</script>
-	<script>
-		document.addEventListener("DOMContentLoaded", function() {
-			// Pie chart
-			new Chart(document.getElementById("chartjs-dashboard-pie"), {
-				type: "pie",
-				data: {
-					labels: ["Direct", "Affiliate", "E-mail", "Other"],
-					datasets: [{
-						data: [2602, 1253, 541, 1465],
-						backgroundColor: [
-							window.cssVariables.primary,
-							window.cssVariables.warning,
-							window.cssVariables.danger,
-							"#E8EAED"
-						],
-					}]
-				},
-				options: {
-					responsive: !window.MSInputMethodContext,
-					maintainAspectRatio: false,
-					cutoutPercentage: 70,
-					legend: {
-						display: false
-					},
-					elements: {
-						arc: {
-							borderWidth: 5,
-							borderColor: window.cssVariables.secondaryBg
-						}
-					},
-				}
-			});
-		});
-	</script>
-	<script>
-		document.addEventListener("DOMContentLoaded", function() {
-			$("#datatables-dashboard-projects").DataTable({
-				destroy: true,
-				pageLength: 6,
-				lengthChange: false,
-				bFilter: false,
-				autoWidth: false
-			});
-		});
-	</script>
+       	// Add keyboard navigation support
+       	document.addEventListener('keydown', function (e) {
+       		if (e.altKey && e.key === 'm') {
+       			e.preventDefault();
+       			toggleMobileMenu();
+       		}
+       	});
+       
+    </script>
 
 </body>
-
-
-<!-- Mirrored from appstack.bootlab.io/dashboard-default?sidebarBehavior=compact by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 12 Aug 2024 10:53:39 GMT -->
 </html>

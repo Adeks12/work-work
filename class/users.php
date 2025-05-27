@@ -168,7 +168,7 @@ class Users extends dbobject
                                     "response_code" => 0,
                                     "response_message" => "Login Successful",
                                     "data" => [
-                                    "redirect" => $redirect_url
+                                    "redirect" => "home.php"
                                     ]
                                 ));
                             }

@@ -1,0 +1,1 @@
+SELECT COUNT(menu_id) AS counter FROM menu WHERE  1 = 1  order by menu_id asc
