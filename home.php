@@ -51,15 +51,32 @@ header('X-Frame-Options: SAMEORIGIN');
     <link rel="shortcut icon" href="img/favicon.ico">
     <link rel="icon" href="img/icon.png" sizes="32x32" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com/">
-    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500&amp;display=swap" rel="stylesheet">
-
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
+    
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
     <link class="js-stylesheet" href="css/light.css" rel="stylesheet">
     <link href="css/app.css" rel="stylesheet">
+
+    <!-- Core JS -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     
+    <!-- Custom JS -->
     <script src="js/settings.js"></script>
-    <script src="https://use.fontawesome.com/fdb76255c2.js"></script>
 
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-Q3ZYEKLQ68"></script>
@@ -71,6 +88,36 @@ header('X-Frame-Options: SAMEORIGIN');
         gtag('js', new Date());
         gtag('config', 'G-Q3ZYEKLQ68');
     </script>
+
+    <style>
+        /* Custom styles to ensure Select2 matches your theme */
+        .select2-container--bootstrap-5 .select2-selection {
+            border: 1px solid #dee2e6;
+            border-radius: 0.25rem;
+            padding: 0.375rem 0.75rem;
+            height: calc(1.5em + 0.75rem + 2px);
+        }
+        
+        .select2-container--bootstrap-5 .select2-selection--single {
+            background-color: #fff;
+            border: 1px solid #dee2e6;
+        }
+        
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+            color: #212529;
+            line-height: 1.5;
+        }
+        
+        .select2-container--bootstrap-5 .select2-dropdown {
+            border-color: #dee2e6;
+            border-radius: 0.25rem;
+        }
+        
+        .select2-container--bootstrap-5 .select2-results__option--highlighted[aria-selected] {
+            background-color: #0d6efd;
+            color: #fff;
+        }
+    </style>
 </head>
 
 <body data-theme="default" data-layout="fluid" data-sidebar-position="left" data-sidebar-behavior="sticky">
@@ -233,15 +280,13 @@ header('X-Frame-Options: SAMEORIGIN');
                         </li>
                     </ul>
                 </div>
-            </nav><?php exit() ?>
+            </nav>
 
             <main class="content" id="page">
                 <?php
-                // Check if registration is incomplete and show complete registration form
-                if ($registration_complete != 1) {
+
+                if ($registration_complete != 1){
                     include('complete_onboarding.php');
-                } elseif ($_SESSION['role_id_sess'] == "003" && ($user_det[0]['account_no'] == "00000000000" || $user_det[0]['bank_name'] == "00")) {
-                    include('setup/pastor_bank_details.php');
                 } else {
                 ?>
                 <div class="row owl-carousel" id="">
@@ -260,12 +305,12 @@ header('X-Frame-Options: SAMEORIGIN');
                             </div>
                         </div>
                     </div>
-                    
                     <div class="col-12 col-sm-6 col-xl d-flex">
                         <div class="card flex-fill">
                             <div class="card-body py-4">
                                 <div class="media">
                                     <div class="d-inline-block mt-2 mr-3">
+                                        <!--											<i class="feather-lg text-warning" data-feather="activity"></i>-->
                                         <i class="fa fa-shopping-basket text-warning" style="font-size:35px"></i>
                                     </div>
                                     <div class="media-body">
@@ -276,12 +321,12 @@ header('X-Frame-Options: SAMEORIGIN');
                             </div>
                         </div>
                     </div>
-                    
                     <div class="col-12 col-sm-6 col-xl d-flex">
                         <div class="card flex-fill">
                             <div class="card-body py-4">
                                 <div class="media">
                                     <div class="d-inline-block mt-2 mr-3">
+                                        <!--											<i class="feather-lg text-success" data-feather="dollar-sign"></i>-->
                                         <i class="fa fa-building text-success" style="font-size:35px"></i>
                                     </div>
                                     <div class="media-body">
@@ -292,12 +337,12 @@ header('X-Frame-Options: SAMEORIGIN');
                             </div>
                         </div>
                     </div>
-                    
                     <div class="col-12 col-sm-6 col-xl d-flex">
                         <div class="card flex-fill">
                             <div class="card-body py-4">
                                 <div class="media">
                                     <div class="d-inline-block mt-2 mr-3">
+                                        <!--											<i class="feather-lg text-danger" data-feather="shopping-bag"></i>-->
                                         <i class="fa fa-money text-danger" style="font-size:35px"></i>
                                     </div>
                                     <div class="media-body">
@@ -308,7 +353,6 @@ header('X-Frame-Options: SAMEORIGIN');
                             </div>
                         </div>
                     </div>
-                    
                     <div class="col-12 col-sm-6 col-xl d-none d-xxl-flex">
                         <div class="card flex-fill">
                             <div class="card-body py-4">
@@ -330,7 +374,8 @@ header('X-Frame-Options: SAMEORIGIN');
                     <div class="col-12 col-lg-8 d-flex">
                         <div class="card flex-fill w-100">
                             <div class="card-header">
-                                <h5 class="card-title mb-0">Total Revenue</h5>
+                                <!--									<span class="badge badge-primary float-right">Monthly</span>-->
+                                <h5 class="card-title mb-0">Total Revenue </h5>
                             </div>
                             <div class="card-body">
                                 <div class="chart chart-lg">
@@ -339,10 +384,10 @@ header('X-Frame-Options: SAMEORIGIN');
                             </div>
                         </div>
                     </div>
-                    
                     <div class="col-12 col-lg-4 d-flex">
                         <div class="card flex-fill w-100">
                             <div class="card-header">
+
                                 <h5 class="card-title mb-0">Pie Distribution</h5>
                             </div>
                             <div class="card-body d-flex">
@@ -361,6 +406,7 @@ header('X-Frame-Options: SAMEORIGIN');
                                             </tr>
                                         </thead>
                                         <tbody id="tfive">
+
                                         </tbody>
                                     </table>
                                 </div>
@@ -377,6 +423,7 @@ header('X-Frame-Options: SAMEORIGIN');
                                     <a href="#" data-bs-toggle="dropdown" data-bs-display="static">
                                         <i class="align-middle" data-feather="more-horizontal"></i>
                                     </a>
+
                                     <div class="dropdown-menu dropdown-menu-end">
                                         <a class="dropdown-item" href="#">Action</a>
                                         <a class="dropdown-item" href="#">Another action</a>
@@ -386,7 +433,6 @@ header('X-Frame-Options: SAMEORIGIN');
                             </div>
                             <h5 class="card-title mb-0">Latest Projects</h5>
                         </div>
-                        
                         <table id="datatables-dashboard-projects" class="table table-striped my-0">
                             <thead>
                                 <tr role="row">
@@ -395,38 +441,34 @@ header('X-Frame-Options: SAMEORIGIN');
                                     <th>Bank</th>
                                     <th>Account Name</th>
                                     <th>Account Number</th>
-                                    <th>Payment ID</th>
-                                    <th>Payment Status</th>
+                                    <th>Paymnent ID</th>
+                                    <th>Paymnent Status</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php
-                                $filter = ($_SESSION['role_id_sess'] == 001) ? "" : " AND church_id = '$_SESSION[church_id_sess]' OR source_acct = '$_SESSION[church_id_sess]'";
-                                $sql = "SELECT * FROM transaction_table WHERE 1 = 1 $filter ORDER BY created desc LIMIT 10";
-                                $result = $dbobject->db_query($sql);
-                                foreach ($result as $row) {
-                                ?>
-                                    <tr>
-                                        <td><?php echo $dbobject->getitemlabel("church_table", "church_id", $row['source_acct'], "church_name"); ?></td>
-                                        <td><?php echo "&#x20a6; " . number_format($row['transaction_amount'], 2); ?></td>
-                                        <td><?php 
-                                            $destination_bank = (isset($row['destination_bank'])) ? $row['destination_bank'] : "";
-                                            echo $dbobject->getitemlabel("banks", "bank_code", $destination_bank, "bank_name"); 
-                                        ?></td>
-                                        <td><?php 
-                                            $account_name = (isset($row['account_name'])) ? $row['account_name'] : "";
-                                            echo $account_name; 
-                                        ?></td>
-                                        <td><?php echo $row['destination_acct']; ?></td>
-                                        <td><?php 
-                                            $payment_id = (isset($row['payment_id'])) ? $row['payment_id'] : "";
-                                            echo $payment_id; 
-                                        ?></td>
-                                        <td><?php echo $row['response_message']; ?></td>
-                                    </tr>
+                                    $filter = ($_SESSION['role_id_sess'] == 001) ? "" : " AND church_id = '$_SESSION[church_id_sess]' OR source_acct = '$_SESSION[church_id_sess]'";
+                                    $sql = "SELECT * FROM transaction_table WHERE 1 = 1 $filter ORDER BY created desc LIMIT 10";
+                                    $result = $dbobject->db_query($sql);
+                                    foreach ($result as $row) {
+                                    ?>
+                                <tr>
+                                    <td><?php echo $dbobject->getitemlabel("church_table", "church_id", $row['source_acct'], "church_name"); ?>
+                                    </td>
+                                    <td><?php echo "&#x20a6; " . number_format($row['transaction_amount'], 2); ?></td>
+                                    <td><?php $destination_bank = (isset($row['destination_bank'])) ? $row['destination_bank'] : "";
+                                                echo $dbobject->getitemlabel("banks", "bank_code", $destination_bank, "bank_name"); ?>
+                                    </td>
+                                    <td><?php $account_name = (isset($row['account_name'])) ? $row['account_name'] : "";
+                                                echo $account_name; ?></td>
+                                    <td><?php echo $row['destination_acct']; ?></td>
+                                    <td><?php $payment_id = (isset($row['payment_id'])) ? $row['payment_id'] : "";
+                                                echo $payment_id; ?></td>
+                                    <td><?php echo $row['response_message']; ?></td>
+                                </tr>
                                 <?php
-                                }
-                                ?>
+                                    }
+                                    ?>
                             </tbody>
                         </table>
                     </div>
@@ -441,15 +483,17 @@ header('X-Frame-Options: SAMEORIGIN');
                     <div class="row text-muted">
                         <div class="col-6 text-left">
                             <ul class="list-inline">
+
                                 <li class="list-inline-item">
                                     <a class="text-muted" href="#">Help Center</a>
                                 </li>
+
                             </ul>
                         </div>
                         <div class="col-6 text-right">
                             <p class="mb-0">
-                                &copy; <?php echo date('Y'); ?> - 
-                                <a target="_blank" href="home.php" class="text-muted">Vuvaa Lifestyle Website</a>
+                                &copy; <?php echo date('Y'); ?> - <a target="_blank" href="home.php"
+                                    class="text-muted">Vuvaa Lifestyle Website</a>
                             </p>
                         </div>
                     </div>
@@ -488,9 +532,35 @@ header('X-Frame-Options: SAMEORIGIN');
     <script src="js/parsely.js"></script>
     <script src="js/owl.carousel.js"></script>
 	<script src="js/chart.min.js"></script>
-
+    
+    <!-- Add Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    
+    <!-- Initialize Select2 -->
     <script>
         $(document).ready(function() {
+            // Initialize Select2
+            $('.select2').each(function() {
+                $(this).select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    dropdownParent: $(this).parent(),
+                    placeholder: $(this).data('placeholder') || 'Select an option',
+                    allowClear: true
+                });
+            });
+            
+            // Fix Select2 inside Bootstrap Modal
+            $('.modal').on('shown.bs.modal', function () {
+                $(this).find('.select2').each(function() {
+                    $(this).select2({
+                        theme: 'bootstrap-5',
+                        dropdownParent: $(this).closest('.modal'),
+                        width: '100%'
+                    });
+                });
+            });
+
             // Load dashboard data
             $.post('utilities.php', {
                 op: 'Dashboard.topFiveChurches'

@@ -363,7 +363,7 @@ class Users extends dbobject
    'expiry' => date('Y-m-d H:i:s', time() + 3600) // Reset expiry to 1 hour from now
    ];
 
-   $result = $this->doUpdate('verification_tokens', $update_data, [], ['email' => $email]);
+   $result = $this->doUpdate('userdata', $update_data, [], ['email' => $email]);
 
    if ($result) {
    // Send new code via email
@@ -433,7 +433,7 @@ class Users extends dbobject
     }
 
     // Verify code from database
-    $query = "SELECT * FROM verification_tokens WHERE email = '$email' AND verification_code = '$code' AND used = 0 AND expiry > NOW()";
+    $query = "SELECT * FROM userdata WHERE email = '$email' AND verification_code = '$code' AND used = 0 AND expiry > NOW()";
     $result = $this->db_query($query, false);
 
     if (!$result || $result === 0) {
@@ -446,7 +446,7 @@ class Users extends dbobject
         // 'email_verified' => 1,
         // 'verified_date' => date('Y-m-d H:i:s')
     ];
-    $update_result = $this->doUpdate('verification_tokens', $update_data, [], ['email' => $email, 'verification_code' => $code]);
+    $update_result = $this->doUpdate('userdata', $update_data, [], ['email' => $email, 'verification_code' => $code]);
 
     if ($update_result) {
         // Clear verification session
@@ -617,7 +617,7 @@ class Users extends dbobject
             'verification_code' => $verification_code,
             'used' => 0
             ];
-            $this->doInsert('verification_tokens', $token_data, []);
+            $this->doInsert('userdata', $token_data, []);
     
 
         // Start session and store email for session-based verification
@@ -667,6 +667,20 @@ class Users extends dbobject
     if (strlen($name) <= 2) { $masked=substr($name, 0, 1) . str_repeat('*', max(0, strlen($name)-1)); } else {
         $masked=substr($name, 0, 3) . str_repeat('*', max(0, strlen($name)-3)); } return $masked . $domain;
      
+    }
+    public function getLGA($data)
+    {
+        
+        $state_id = $data['state_id'];
+        // Fetch LGAs based on the selected state
+        $query = "SELECT Lga, stateid as id FROM lga WHERE stateid = '$state_id' ORDER BY lga";
+
+        $lgas = $this->db_query($query);
+        // Return the result as JSON
+        $lgas1 = json_encode($lgas);
+        
+        return $lgas1;
+        
     }
 
     public function complete_registration($data)

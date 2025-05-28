@@ -18,7 +18,6 @@ if($_SESSION['username_sess'] == "")
 include_once("libs/dbfunctions.php");
 include_once("libs/SecurityService.php");
 
-
 $dbobject = new dbobject();
 
 // if(isset($_REQUEST['nrfa-csrf-token-label'])){
