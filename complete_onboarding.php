@@ -1,18 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Complete Registration - Bootstrap</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Select2 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <!-- Font Awesome for icons -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-
-    <style>
+<style>
         body {
             background-color: #f8f9fa;
         }
@@ -132,10 +118,9 @@
             box-shadow: 0 0 0 0.2rem rgba(13, 202, 240, 0.25);
         }
     </style>
-</head>
 
-<body>
-    <?php
+
+   <?php
     session_start();
 
     include_once("libs/dbfunctions.php");
@@ -168,9 +153,9 @@
 
     <div class="container-fluid py-5">
         <div class="row justify-content-center">
-            <div class="col-12 col-lg-12 col-xl-12"><!-- WIDER WIDTH HERE -->
+            <div class="col-12 col-lg-12 col-xl-12">
                 <div class="form-container p-4 p-md-5">
-                    <h2 class="text-center text-secondary mb-3 fw-bold">Please complete your information</h2>
+                    <h2 class="text-center text-secondary mb-3 fw-bold">Setup Your Company To Use The Application</h2>
                     <p class="text-center text-muted small mb-4">Fill in your remaining information to complete
                         registration.</p>
 
@@ -378,6 +363,8 @@
             const percent = ((index + 1) / steps.length) * 100;
             progressBar.style.width = percent + "%";
             progressBar.setAttribute('aria-valuenow', percent);
+
+            updateRequiredFields(); // <-- Add this line
         }
 
         function validateCurrentStep() {
@@ -599,6 +586,21 @@
             });
         });
 
+        function updateRequiredFields() {
+    // Remove required from all fields
+    document.querySelectorAll('#multiStepForm [required]').forEach(function(field) {
+        field.dataset.required = "true";
+        field.removeAttribute('required');
+    });
+    // Add required only to visible fields in the current step
+    const currentForm = document.querySelector('.form-step.active');
+    if (currentForm) {
+        currentForm.querySelectorAll('[data-required="true"]').forEach(function(field) {
+            field.setAttribute('required', 'required');
+        });
+    }
+}
+
         document.getElementById("multiStepForm").addEventListener("submit", function (e) {
             e.preventDefault();
 
@@ -660,6 +662,6 @@
             });
         });
     </script>
-</body>
+
 
 </html>

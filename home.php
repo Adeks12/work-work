@@ -16,11 +16,21 @@ $menu = new Menu();
 $menu_list = $menu->generateMenu($_SESSION['role_id_sess']);
 $menu_list = $menu_list['data'];
 
-$sql = "SELECT bank_name,account_no,account_name,registration_completed FROM userdata WHERE username = '$_SESSION[username_sess]' LIMIT 1 ";
+$sql = "SELECT bank_name,account_no,account_name,registration_completed, merchant_id FROM userdata WHERE username = '$_SESSION[username_sess]' LIMIT 1 ";
 $user_det = $dbobject->db_query($sql);
 
 // Check if registration is complete
 $registration_complete = isset($user_det[0]['registration_completed']) ? $user_det[0]['registration_completed'] : 0;
+$merchant_id = isset($user_det[0]['merchant_id']) ? $user_det[0]['merchant_id'] : 0;
+
+
+$sql2 = "SELECT merchant_first_name FROM merchant_reg WHERE merchant_id = '$merchant_id' LIMIT 1";
+$sql3 = "SELECT merchant_last_name FROM merchant_reg WHERE merchant_id = '$merchant_id' LIMIT 1";
+$user_det2 = $dbobject->db_query($sql2);
+$user_det3 = $dbobject->db_query($sql3);
+$merchant_first_name = isset($user_det2[0]['merchant_first_name']) ? $user_det2[0]['merchant_first_name'] : '';
+$merchant_last_name = isset($user_det3[0]['merchant_last_name']) ? $user_det3[0]['merchant_last_name'] : '';
+;
 
 header("Cache-Control: no-cache;no-store, must-revalidate");
 header_remove("X-Powered-By");
@@ -117,6 +127,31 @@ header('X-Frame-Options: SAMEORIGIN');
             background-color: #0d6efd;
             color: #fff;
         }
+
+        /* Add this to your CSS */
+        .sidebar {
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.sidebar-mobile-open {
+            transform: translateX(0);
+        }
+
+        @media (max-width: 991.98px) {
+            .sidebar {
+                transform: translateX(-100%);
+                position: fixed;
+                z-index: 1050;
+                top: 0;
+                left: 0;
+                height: 100vh;
+                width: 260px;
+                background: #fff;
+            }
+            .sidebar.sidebar-mobile-open {
+                transform: translateX(0);
+            }
+        }
     </style>
 </head>
 
@@ -206,16 +241,14 @@ header('X-Frame-Options: SAMEORIGIN');
        				<div class="media">
        					<div class="user-avatar-container">
        						<img class="rounded-circle user-avatar" src="<?php echo $_SESSION['photo_path_sess']; ?>"
-       							alt="<?php echo $_SESSION['firstname_sess'] . ' ' . $_SESSION['lastname_sess']; ?>"
+       							alt="<?php echo $merchant_first_name . ' ' . $merchant_last_name; ?>"
        							width="40" height="40" onerror="this.src='img/avatars/avatar.jpg'">
        						<div class="user-status-indicator"></div>
        					</div>
        					<div class="media-body">
-       						<h6 class="user-name mb-1">
-       							<?php echo $_SESSION['firstname_sess'] . ' ' . $_SESSION['lastname_sess']; ?>
-       						</h6>
+       						
        						<p class="user-role mb-2">
-       							<?php echo $_SESSION['role_id_name']; ?>
+       							<?php echo $merchant_first_name  . ' ' . $merchant_last_name; ?>
        						</p>
        						<div class="user-actions">
        							<button class="btn btn-outline-light btn-sm profile-btn"
@@ -244,12 +277,11 @@ header('X-Frame-Options: SAMEORIGIN');
 
                 <a href="javascript:void(0)" class="d-flex mr-2">
                     <?php $state_loc = ":" . $dbobject->getitemlabel('lga', 'stateid', $_SESSION['state_id_sess'], 'State'); ?>
-                    Your Role: &nbsp; 
+                    Welcome: &nbsp; 
                     <span style="font-weight:bold; color:#000">
                         <?php 
-                        echo $_SESSION['role_id_name'];
-                        echo ($_SESSION['role_id_sess'] != '001') ? " from " . $_SESSION['church_name_sess'] : "";
-                        echo " <small style='font-size:10px; color:red'>(" . $dbobject->getitemlabel('church_type', 'id', $_SESSION['church_type_id_sess'], 'name') . ")" . $state_loc . "</small>"; 
+                        echo $merchant_first_name . ' ' . $merchant_last_name;
+                        
                         ?>
                     </span>
                 </a>

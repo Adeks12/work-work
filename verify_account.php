@@ -137,7 +137,7 @@ if (!isset($_SESSION['pending_verification_email'])) {
                             showConfirmButton: false
                         });
                         setTimeout(() => {
-                            window.location = 'complete_onboarding.php?verified=true';
+                            window.location = 'home.php?verified=true';
                         }, 2000);
                     } else {
                         Swal.fire({

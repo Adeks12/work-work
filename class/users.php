@@ -345,8 +345,11 @@ class Users extends dbobject
 
    $email = $_SESSION['pending_verification_email'];
 
-   // Get user data
-   $user = $this->db_query("SELECT * FROM verification_tokens WHERE email = '$email' AND used = 0 LIMIT 1");
+   // Get user data from userdata table
+   $sql = "SELECT * FROM userdata WHERE email = '$email' AND verification_status = '0' LIMIT 1";
+   
+   $user = $this->db_query($sql, true);
+   
    if (!$user || count($user) === 0) {
    return json_encode([
    'response_code' => 20,
@@ -367,45 +370,16 @@ class Users extends dbobject
 
    if ($result) {
    // Send new code via email
-   $mail = new PHPMailer(true);
    $lastname = $user[0]['lastname'] ?? '';
+   $email_result = $this->sendVerificationEmail($email, $verification_code);
 
-   try {
-   $mail->isSMTP();
-   $mail->Host = 'smtp.gmail.com';
-   $mail->SMTPAuth = true;
-   $mail->Username = 'Jesuslovestestimony@gmail.com';
-   $mail->Password = 'liuz vikp wzei ggkt';
-   $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-   $mail->Port = 587;
-
-   $mail->setFrom('Jesuslovestestimony@gmail.com', 'The Lord\'s Chosen');
-   if (!$mail->addAddress($email)) {
-   return json_encode(['response_code' => 342, 'response_message' => 'Invalid email address: ' . $email]);
-   }
-
-   $mail->isHTML(true);
-   $mail->Subject = 'Your New Verification Code - The Lord\'s Chosen';
-   $mail->Body = "Dear " . htmlspecialchars($lastname ?: $email) . ",<br><br>" .
-   "You requested a new verification code.<br><br>" .
-   "<strong>Your verification code is: <span style='font-size: 18px;'>{$verification_code}</span></strong><br><br>" .
-   "Please use this code to complete your registration.<br><br>" .
-   "God bless you richly,<br>The Lord's Chosen Team";
-
-   $mail->AltBody = "Dear {$lastname},\n\nYour new verification code is: {$verification_code}\n\nUse it to complete your
-   registration.";
-
-   if ($mail->send()) {
+   if ($email_result['success']) {
    return json_encode([
    'response_code' => 0,
    'response_message' => 'A new verification code has been sent to your email.'
    ]);
    } else {
-   return json_encode(['response_code' => 500, 'response_message' => 'Failed to send email. Error: ' .
-   $mail->ErrorInfo]);
-   }
-   } catch (Exception $e) {
-   return json_encode(['response_code' => 500, 'response_message' => 'Mail Error: ' . $e->getMessage()]);
+   return json_encode(['response_code' => 500, 'response_message' => $email_result['message']]);
    }
    } else {
    return json_encode(['response_code' => 20, 'response_message' => 'Failed to update verification code.']);
@@ -414,249 +388,292 @@ class Users extends dbobject
 
    public function verifyOTP()
    {
-    if (session_status() == PHP_SESSION_NONE) {
+   if (session_status() == PHP_SESSION_NONE) {
+   session_start();
+   }
+
+   // Get parameters
+   $code = isset($_POST['code']) ? $_POST['code'] : '';
+   $email = isset($_SESSION['pending_verification_email']) ? $_SESSION['pending_verification_email'] : '';
+
+   // Validation
+   if (empty($code)) {
+   return json_encode(["response_code" => 20, "response_message" => "Verification code is required"]);
+   }
+
+   if (empty($email)) {
+   return json_encode(["response_code" => 20, "response_message" => "Invalid session. Please register again."]);
+   }
+
+   // Verify code from userdata table
+   $query = "SELECT * FROM userdata WHERE email = '$email' AND verification_code = '$code' AND verification_status = '0'
+   AND expiry > NOW() LIMIT 1";
+   
+   $result = $this->db_query($query);
+
+   if (!$result || count($result) === 0) {
+   return json_encode(["response_code" => 20, "response_message" => "Invalid or expired verification code."]);
+   }
+
+   // Mark user as verified
+   $update_data = [
+   'verification_status' => 1,
+   'verification_date_created' => date('Y-m-d H:i:s'),
+   'verification_code' => '0', // Clear the verification code
+   'expiry' => '0' // Clear the expiry
+   ];
+
+   $update_result = $this->doUpdate('userdata', $update_data, [], ['email' => $email, 'verification_code' => $code]);
+
+   if ($update_result) {
+   // Clear verification session
+   unset($_SESSION['pending_verification_email']);
+
+   // Set login session (optional - user is now verified and can be logged in)
+   $_SESSION['username_sess'] = $result[0]['username'];
+
+   return json_encode([
+   'response_code' => 0,
+   'response_message' => 'Email verification successful! You can now access your account.',
+   'data' => [
+   'redirect' => 'home.php' // or wherever you want to redirect after verification
+   ]
+   ]);
+   } else {
+   return json_encode([
+   "response_code" => 20,
+   "response_message" => "Failed to update verification status."
+   ]);
+   }
+   }
+
+   
+        public function register($data)
+        {
+        // Convert boolean fields
+        $data['passchg_logon'] = isset($data['passchg_logon']) ? 1 : 0;
+        $data['user_disabled'] = isset($data['user_disabled']) ? 1 : 0;
+        $data['user_locked'] = isset($data['user_locked']) ? 1 : 0;
+
+        // Validate required fields
+        if (empty($data['role_id'])) {
+        return json_encode(["response_code" => 20, "response_message" => "Role ID is required"]);
+        }
+        if (empty($data['email'])) {
+        return json_encode(["response_code" => 20, "response_message" => "Email is required"]);
+        }
+        if (empty($data['password'])) {
+        return json_encode(["response_code" => 20, "response_message" => "Password is required"]);
+        }
+        if (!isset($data['confirm_password'])) {
+        return json_encode(["response_code" => 20, "response_message" => "Confirm Password is required"]);
+        }
+
+        $email = $data['email'];
+        $lastname = isset($data['lastname']) ? $data['lastname'] : '';
+
+        // Check if role_id exists
+        $role_exists = $this->db_query("SELECT role_id FROM role WHERE role_id = '{$data['role_id']}'");
+        if (!$role_exists || count($role_exists) === 0) {
+        return json_encode(["response_code" => 20, "response_message" => "Invalid Role ID provided"]);
+        }
+
+        // Check password match
+        if ($data['password'] !== $data['confirm_password']) {
+        return json_encode(["response_code" => 20, "response_message" => "Passwords do not match"]);
+        }
+
+        // Check if user already exists
+        $sql = ("SELECT email, verification_status FROM userdata WHERE email = '{$email}' LIMIT
+        1");
+        $existing_user = $this->db_query($sql, true);
+        
+        if ($existing_user) {
+        // If user exists but not verified, resend OTP
+        if ($existing_user[0]['verification_status'] == 0) {
+        return $this->resendVerificationForExistingUser($email);
+        } else {
+        // User exists and is verified
+        return json_encode(["response_code" => 77, "response_message" => 'Email already exists and is verified']);
+        }
+        }
+
+        // Validate input data
+        $validation = $this->validate(
+        $data,
+        [
+        'role_id' => 'required',
+        'email' => 'required|email',
+        'password' => 'required|min:6',
+        'confirm_password' => 'required|match:password'
+        ],
+        [
+        'email' => 'Email',
+        'password' => 'Password',
+        'confirm_password' => 'Confirm Password',
+        'role_id' => 'Role ID'
+        ]
+        );
+
+        if (!$validation['error']) {
+        // Generate 6-digit verification code
+        $verification_code = random_int(100000, 999999);
+
+        // DES encryption for password
+        $desencrypt = new DESEncryption();
+        $key = $email;
+        $cipher_password = $desencrypt->des($key, $data['password'], 1, 0, null, null);
+        $encrypted_password = $desencrypt->stringToHex($cipher_password);
+
+        // Generate unique merchant ID
+        do {
+        $merchant_id = 'PRO-' . mt_rand(100000, 999999);
+        $merchant_exists = $this->db_query("SELECT merchant_id FROM userdata WHERE merchant_id = '{$merchant_id}' LIMIT
+        1", false);
+        } while ($merchant_exists);
+
+        // Prepare user data for insertion
+        $user_data = [
+        'role_id' => $data['role_id'],
+        'email' => $email,
+        'username' => $email,
+        'password' => $encrypted_password,
+        'merchant_id' => $merchant_id,
+        'verification_code' => $verification_code,
+        'verification_status' => 0, // Unverified
+        'passchg_logon' => $data['passchg_logon'],
+        'user_disabled' => $data['user_disabled'],
+        'user_locked' => $data['user_locked'],
+        'created' => date('Y-m-d H:i:s'),
+        'expiry' => date('Y-m-d H:i:s', time() + 3600) // 1 hour expiry
+        ];
+
+        // Insert user data into userdata table
+        $excludedKeys = ['op', 'confirm_password', 'operation', 'nrfa-csrf-token-label'];
+        $insert_result = $this->doInsert('userdata', $user_data, $excludedKeys);
+
+        if ($insert_result) {
+        // Send verification email
+        $email_result = $this->sendVerificationEmail($email,  $verification_code);
+
+        if ($email_result['success']) {
+        // Start session and store email for verification
+        if (session_status() == PHP_SESSION_NONE) {
         session_start();
-    }
+        }
+        $_SESSION['pending_verification_email'] = $email;
 
-    // Get parameters
-    $code = isset($_POST['code']) ? $_POST['code'] : '';
-    $email = isset($_SESSION['pending_verification_email']) ? $_SESSION['pending_verification_email'] : '';
-    $user = isset($_SESSION['userinfo']) ? $_SESSION['userinfo'] : '';
+        return json_encode([
+        'response_code' => 0,
+        'response_message' => 'Registration successful! Please check your email for verification code.',
+        'data' => [
+        'email' => $email,
+        'redirect' => "verify_account.php"
+        ]
+        ]);
+        } else {
+        // Registration succeeded but email failed - still allow verification
+        if (session_status() == PHP_SESSION_NONE) {
+        session_start();
+        }
+        $_SESSION['pending_verification_email'] = $email;
 
-    // Validation
-    if (empty($code)) {
-        return json_encode(["response_code" => 20, "response_message" => "Verification code is required"]);
-    }
-
-    if (empty($email)) {
-        return json_encode(["response_code" => 20, "response_message" => "Invalid session. Please register again."]);
-    }
-
-    // Verify code from database
-    $query = "SELECT * FROM userdata WHERE email = '$email' AND verification_code = '$code' AND used = 0 AND expiry > NOW()";
-    $result = $this->db_query($query, false);
-
-    if (!$result || $result === 0) {
-        return json_encode(["response_code" => 20, "response_message" => "Invalid or expired verification code."]);
-    }
-
-    // Mark as verified (update only the matching token)
-    $update_data = [
-        'used' => 1
-        // 'email_verified' => 1,
-        // 'verified_date' => date('Y-m-d H:i:s')
-    ];
-    $update_result = $this->doUpdate('userdata', $update_data, [], ['email' => $email, 'verification_code' => $code]);
-
-    if ($update_result) {
-        // Clear verification session
-        unset($_SESSION['pending_verification_email']);
-
-        // Insert user into userdata if not already present
-        $exists = $this->db_query("SELECT username FROM userdata WHERE email = '$email'", false);
-        if (!$exists || count($exists) === 0) {
-            $user['verification_status'] = 'verified';
-            $excludedKeys = ['op', 'confirm_password', 'operation', 'nrfa-csrf-token-label', 'verification_code', 'expiry', 'used'];
-            $count = $this->doInsert('userdata', $user, $excludedKeys);
-            if ($count != 1) {
-                return json_encode([
-                    'response_code' => 20,
-                    'response_message' => 'Verification succeeded, but failed to create user record. Please contact support.'
-                ]);
-            }
+        return json_encode([
+        'response_code' => 0,
+        'response_message' => 'Registration successful! However, email could not be sent. Please contact support.',
+        'data' => [
+        'email' => $email,
+        'redirect' => "verify_account.php"
+        ]
+        ]);
+        }
+        } else {
+        return json_encode(["response_code" => 78, "response_message" => 'Registration failed. Please try again.']);
+        }
+        } else {
+        return json_encode(["response_code" => 20, "response_message" => $validation['messages'][0]]);
+        }
         }
 
-                // Optionally, you can set a session variable for login here
-                $_SESSION['username_sess'] = $user['username'] ?? $email;
+        private function resendVerificationForExistingUser($email, )
+        {
+        // Generate new verification code
+        $verification_code = random_int(100000, 999999);
 
-                return json_encode([
-                    'response_code' => 0,
-                    'response_message' => 'Email verification successful! You can now log in.'
-                ]);
-            } else {
-                return json_encode([
-                    "response_code" => 20,
-                    "response_message" => "Failed to update verification status."
-                ]);
-            }
+        // Update the existing user with new verification code and expiry
+        $update_data = [
+        'verification_code' => $verification_code,
+        'expiry' => date('Y-m-d H:i:s', time() + 3600) // Reset expiry to 1 hour from now
+        ];
+
+        $update_result = $this->doUpdate('userdata', $update_data, [], ['email' => $email]);
+
+        if ($update_result) {
+        // Send verification email
+        $email_result = $this->sendVerificationEmail($email,  $verification_code);
+
+        if ($email_result['success']) {
+        // Start session for verification
+        if (session_status() == PHP_SESSION_NONE) {
+        session_start();
         }
-    
-    public function register($data)
-    {
-    // Convert boolean fields
-    $data['passchg_logon'] = isset($data['passchg_logon']) ? 1 : 0;
-    $data['user_disabled'] = isset($data['user_disabled']) ? 1 : 0;
-    $data['user_locked'] = isset($data['user_locked']) ? 1 : 0;
+        $_SESSION['pending_verification_email'] = $email;
 
-    // Validate required fields
-    if (empty($data['role_id'])) {
-    return json_encode(["response_code" => 20, "response_message" => "Role ID is required"]);
-    }
-    if (empty($data['email'])) {
-    return json_encode(["response_code" => 20, "response_message" => "Email is required"]);
-    }
-    if (empty($data['password'])) {
-    return json_encode(["response_code" => 20, "response_message" => "Password is required"]);
-    }
-    if (!isset($data['confirm_password'])) {
-    return json_encode(["response_code" => 20, "response_message" => "Confirm Password is required"]);
-    }
+        return json_encode([
+        'response_code' => 0,
+        'response_message' => 'A new verification code has been sent to your email.',
+        'data' => [
+        'email' => $email,
+        'redirect' => "verify_account.php"
+        ]
+        ]);
+        } else {
+        return json_encode(['response_code' => 500, 'response_message' => 'Failed to send verification email.']);
+        }
+        } else {
+        return json_encode(['response_code' => 20, 'response_message' => 'Failed to update verification code.']);
+        }
+        }
 
-    $email = $data['email'];
-    $lastname = isset($data['lastname']) ? $data['lastname'] : '';
+        private function sendVerificationEmail($email, $verification_code)
+        {
+        $mail = new PHPMailer(true);
 
-    // Generate 6-digit verification code
-    $verification_code = random_int(100000, 999999);
-    $data['verification_code'] = $verification_code;
+        try {
+        $mail->isSMTP();
+        $mail->Host = 'smtp.gmail.com';
+        $mail->SMTPAuth = true;
+        $mail->Username = 'Jesuslovestestimony@gmail.com';
+        $mail->Password = 'liuz vikp wzei ggkt';
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port = 587;
 
-    // Check if role_id exists
-    $role_exists = $this->db_query("SELECT role_id FROM role WHERE role_id = '{$data['role_id']}'");
-    if (!$role_exists || count($role_exists) === 0) {
-    return json_encode(["response_code" => 20, "response_message" => "Invalid Role ID provided"]);
-    }
+        $mail->setFrom('Jesuslovestestimony@gmail.com', 'The Lord\'s Chosen');
+        if (!$mail->addAddress($email)) {
+        return ['success' => false, 'message' => 'Invalid email address: ' . $email];
+        }
 
-    // Check password match
-    if ($data['password'] !== $data['confirm_password']) {
-    return json_encode(["response_code" => 20, "response_message" => "Passwords do not match"]);
-    }
+        $mail->isHTML(true);
+        $mail->Subject = 'Your Verification Code - The Lord\'s Chosen';
+        $mail->Body = "Dear " . htmlspecialchars( $email) . ",<br><br>" .
+        "Thank you for registering with us.<br><br>" .
+        "<strong>Your verification code is: <span style='font-size: 18px;'>{$verification_code}</span></strong><br><br>"
+        .
+        "Please use this code to complete your registration.<br><br>" .
+        "God bless you richly,<br>The Lord's Chosen Team";
 
-    // Validate
-    $validation = $this->validate(
-    $data,
-    [
-    'role_id' => 'required',
-    'email' => 'required|email|unique:userdata.email',
-    'password' => 'required|min:6',
-    'confirm_password' => 'required|match:password'
-    ],
-    [
-    'email' => 'Email',
-    'password' => 'Password',
-    'confirm_password' => 'Confirm Password',
-    'role_id' => 'Role ID'
-    ]
-    );
-
-    if (!$validation['error']) {
-    // Check for duplicate email
-    $exists = $this->db_query("SELECT username FROM userdata WHERE email = '{$email}'", false);
-    if ($exists) {
-    return json_encode(["response_code" => 77, "response_message" => 'Email already exists']);
-    }
-
-    // DES encryption
-    $desencrypt = new DESEncryption();
-    $key = $email;
-    $cipher_password = $desencrypt->des($key, $data['password'], 1, 0, null, null);
-    $data['password'] = $desencrypt->stringToHex($cipher_password);
-
-    $data['created'] = date('Y-m-d H:i:s');
-
-    // Generate unique merchant ID if not already present
-    if (empty($data['merchant_id'])) {
-    do {
-    $merchant_id = 'PRO-' . mt_rand(100000, 999999);
-    $merchant_exists = $this->db_query("SELECT merchant_id FROM userdata WHERE merchant_id = '{$merchant_id}' LIMIT 1",
-    false);
-    } while ($merchant_exists);
-    $data['merchant_id'] = $merchant_id;
-    }
-      // Create a verification token with expiration time
-      $expiry = time() + 3600; // 1 hour expiry
-      
-      // Store token in database with email and expiration
-      
-      
-      $data['expiry'] = date('Y-m-d H:i:s', $expiry);
-      $data['used'] = 0;
-      $data['username'] = $email;
-
-    // Clean up data
-    // $excludedKeys = ['op', 'confirm_password', 'operation', 'nrfa-csrf-token-label'];
-    // $count = $this->doInsert('userdata', $data, $excludedKeys);
-
-    if ($email) {
-    // Send verification code via email
-    $mail = new PHPMailer(true);
-
-    try {
-    $mail->isSMTP();
-    $mail->Host = 'smtp.gmail.com';
-    $mail->SMTPAuth = true;
-    $mail->Username = 'Jesuslovestestimony@gmail.com';
-    $mail->Password = 'liuz vikp wzei ggkt';
-    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-    $mail->Port = 587;
-
-    $mail->setFrom('Jesuslovestestimony@gmail.com', 'The Lord\'s Chosen');
-    if (!$mail->addAddress($email)) {
-    return json_encode(['response_code' => 342, 'response_message' => 'Invalid email address: ' . $email]);
-    }
-
-    $mail->isHTML(true);
-    $mail->Subject = 'Your Verification Code - The Lord\'s Chosen';
-    $mail->Body = "Dear " . htmlspecialchars($lastname ?: $email) . ",<br><br>" .
-    "Thank you for registering with us.<br><br>" .
-    "<strong>Your verification code is: <span style='font-size: 18px;'>{$verification_code}</span></strong><br><br>" .
-    "Please use this code to complete your registration.<br><br>" .
-    "God bless you richly,<br>The Lord's Chosen Team";
-
-    $mail->AltBody = "Dear {$lastname},\n\nYour verification code is: {$verification_code}\n\nUse it to complete your
-    registration.";
+        $mail->AltBody = "Dear {$email},\n\nYour verification code is: {$verification_code}\n\nUse it to complete
+        your registration.";
 
         if ($mail->send()) {
-
-            // Create a verification token with expiration time
-            $token = bin2hex(random_bytes(32));
-            $expiry = time() + 3600; // 1 hour expiry
-
-            // Store token in database with email and expiration
-            $token_data = [
-            'email' => $email,
-            'expiry' => date('Y-m-d H:i:s', $expiry),
-            'verification_code' => $verification_code,
-            'used' => 0
-            ];
-            $this->doInsert('userdata', $token_data, []);
-    
-
-        // Start session and store email for session-based verification
-                    if (session_status() == PHP_SESSION_NONE) {
-                    session_start();
-                    }
-                    $_SESSION['pending_verification_email'] = $email;
-                    $_SESSION['userinfo'] = $data;
-                    // Store user data in session for later use
-
-                    return json_encode([
-                    'response_code' => 0,
-                    'response_message' => 'Please verify your email to complete your registration.',
-                    'data' => [
-                    'email' => $email,
-                    'redirect' => "verify_account.php"
-                    ]
-                    ]);
+        return ['success' => true, 'message' => 'Email sent successfully'];
         } else {
-        return json_encode(['response_code' => 500, 'response_message' => 'Failed to send email. Error: ' .
-        $mail->ErrorInfo]);
+        return ['success' => false, 'message' => 'Failed to send email: ' . $mail->ErrorInfo];
         }
-    } catch (Exception $e) {
-    return json_encode(['response_code' => 500, 'response_message' => 'Mail Error: ' . $e->getMessage()]);
-    }
-    } else {
-    return json_encode(["response_code" => 78, "response_message" => 'Registration Failed']);
-    }
-    } else {
-    if (
-    isset($validation['messages'][0]) &&
-    strpos($validation['messages'][0], 'unique') !== false &&
-    strpos($validation['messages'][0], 'email') !== false
-    ) {
-    return json_encode(["response_code" => 21, "response_message" => "Email address is already in use."]);
-    }
-    return json_encode(["response_code" => 20, "response_message" => $validation['messages'][0]]);
-    }
-    }
+        } catch (Exception $e) {
+        return ['success' => false, 'message' => 'Mail Error: ' . $e->getMessage()];
+        }
+        }
 
     // Mask email for display
     function mask_email($email) {

@@ -12,7 +12,8 @@ $dbobject = new dbobject();
 //Get default role for registration
 $sql = "SELECT role_id FROM role WHERE role_name = 'Merchant' LIMIT 1";
 $default_role = $dbobject->db_query($sql);
-$role_id = isset($default_role[0]['role_id']) ? $default_role[0]['role_id'] : 002; //Default role id
+$role_id = isset($default_role[0]['role_id']) ? $default_role[0]['role_id'] : 002; // Default role ID for Merchant
+
 //Check if user is already logged in
 
 header("Cache-Control: no-cache;no-store, must-revalidate");
@@ -23,7 +24,6 @@ $crossorigin = 'anonymous';
 ?>
 
 <!DOCTYPE html>
-
 <html lang="en">
 
 <head>
@@ -43,6 +43,7 @@ $crossorigin = 'anonymous';
 	<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500&amp;display=swap" rel="stylesheet">
 
 	<link href="css/app.css" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
 	<style>
 		.password-container {
@@ -53,7 +54,6 @@ $crossorigin = 'anonymous';
 		.password-container input {
 			width: 100%;
 			padding-right: 40px;
-			/* Space for the eye icon */
 		}
 
 		.toggle-password {
@@ -63,19 +63,65 @@ $crossorigin = 'anonymous';
 			transform: translateY(-50%);
 			cursor: pointer;
 			display: none;
-			/* Hidden by default */
 			color: #666;
 		}
 
 		.toggle-password:hover {
 			color: #333;
 		}
+
+		.loading-spinner {
+			display: none;
+			width: 20px;
+			height: 20px;
+			border: 2px solid #f3f3f3;
+			border-top: 2px solid #3498db;
+			border-radius: 50%;
+			animation: spin 1s linear infinite;
+			margin-right: 10px;
+		}
+
+		@keyframes spin{
+			0% {
+			transform: rotate(0deg);
+		}
+
+		100% {
+			transform: rotate(360deg);
+		}
+		}
+
+		.btn:disabled {
+			opacity: 0.6;
+			cursor: not-allowed;
+		}
+
+		.alert {
+			padding: 12px 16px;
+			margin-bottom: 20px;
+			border: 1px solid transparent;
+			border-radius: 4px;
+		}
+
+		.alert-success {
+			color: #155724;
+			background-color: #d4edda;
+			border-color: #c3e6cb;
+		}
+
+		.alert-danger {
+			color: #721c24;
+			background-color: #f8d7da;
+			border-color: #f5c6cb;
+		}
+
+		.alert-info {
+			color: #0c5460;
+			background-color: #d1ecf1;
+			border-color: #bee5eb;
+		}
 	</style>
 
-	<!-- BEGIN SETTINGS -->
-	<!-- Remove this after purchasing -->
-	<script src="js/settings.js"></script>
-	<!-- END SETTINGS -->
 	<script async src="https://www.googletagmanager.com/gtag/js?id=G-Q3ZYEKLQ68"></script>
 	<script>
 		window.dataLayer = window.dataLayer || [];
@@ -84,7 +130,6 @@ $crossorigin = 'anonymous';
 			dataLayer.push(arguments);
 		}
 		gtag('js', new Date());
-
 		gtag('config', 'G-Q3ZYEKLQ68');
 	</script>
 </head>
@@ -108,18 +153,22 @@ $crossorigin = 'anonymous';
 					<h3 class="fw-bold">Create Account</h3>
 					<p class="text-muted">Fill in the form to register.</p>
 				</div>
+
+				<!-- Alert Messages -->
+				<div id="alertContainer"></div>
+
 				<form id="registerForm" onsubmit="return false" autocomplete="off">
 					<input type="hidden" name="op" value="Users.register">
 					<input type="hidden" name="role_id" value="<?php echo $role_id; ?>">
 
 					<div class="mb-3">
-						<label class="form-label">Email</label>
+						<label class="form-label">Email <span class="text-danger">*</span></label>
 						<input class="form-control" type="email" name="email" id="email" placeholder="Enter your email"
 							required />
 					</div>
 
 					<div class="mb-3 password-container position-relative">
-						<label class="form-label">Password</label>
+						<label class="form-label">Password <span class="text-danger">*</span></label>
 						<input class="form-control" type="password" name="password" id="password"
 							placeholder="Enter your password" required />
 						<i class="fa fa-eye toggle-password position-absolute" data-target="password"
@@ -127,18 +176,18 @@ $crossorigin = 'anonymous';
 					</div>
 
 					<div class="mb-3 password-container position-relative">
-						<label class="form-label">Confirm Password</label>
+						<label class="form-label">Confirm Password <span class="text-danger">*</span></label>
 						<input class="form-control" type="password" name="confirm_password" id="confirm_password"
 							placeholder="Confirm your password" required />
 						<i class="fa fa-eye toggle-password position-absolute" data-target="confirm_password"
 							style="right: 10px; top: 44px; cursor: pointer;"></i>
 					</div>
 
-					<div id="register_mssg" class="mb-3"></div>
-
 					<div class="d-grid gap-2">
-						<button class="btn btn-success btn-lg" onclick="sendRegister('registerForm')"
-							id="registerBtn">Sign Up</button>
+						<button class="btn btn-success btn-lg" onclick="sendRegister('registerForm')" id="registerBtn">
+							<span class="loading-spinner" id="loadingSpinner"></span>
+							<span id="buttonText">Sign Up</span>
+						</button>
 					</div>
 
 					<div class="text-center mt-4">
@@ -148,78 +197,190 @@ $crossorigin = 'anonymous';
 			</div>
 		</div>
 	</div>
-</body>
 
-	<script src="js/app.js"></script>
-	<script src="js/jquery-3.6.0.min.js"></script>
-	<script src="js/jquery.blockUI.js"></script>
-	<script src="js/parsely.js"></script>
-	<script src="js/sweet_alerts.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.blockUI/2.70/jquery.blockUI.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-	<script src="js/main.js"></script>
+	<script src="js/parsely.js"></script>
+
 	<script>
-		function sendRegister(id) {
-			var forms = $('#' + id);
-			var email = $("#email").val();
-			forms.parsley().validate();
-			if (forms.parsley().isValid()) {
-				$.blockUI();
-				var data = $("#" + id).serialize();
+		// Global variables
+		let isSubmitting = false;
 
-				$.ajax({
-					type: "post",
-					url: "utilities_default.php",
-					data: data,
-					dataType: "json",
-					beforeSend: function () {
-						$.blockUI({
-							message: "Processing..... Please wait...",
-						});
-					},
-					success: function (data) {
-						$.unblockUI();
-						var response = data;
-						if (response.response_code == 0) {
-							Swal.fire({
-								icon: 'success',
-								title: 'Registration Successful',
-								text: response.response_message,
-								timer: 3000,
-								showConfirmButton: false
-							});
-							setTimeout(() => {
-								// Use the token provided in the response for secure redirection
-								setTimeout(() => {
-								// Redirect to verification page
-								window.location = response.data.redirect;
-								}, 2000);
+		function showAlert(message, type = 'info') {
+			const alertContainer = document.getElementById('alertContainer');
+			const alertClass = type === 'success' ? 'alert-success' :
+				type === 'error' ? 'alert-danger' : 'alert-info';
 
-							}, 2000);
-						} else {
-							regenerateCORS();
-							Swal.fire({
-								icon: 'error',
-								title: 'Registration Failed',
-								text: response.response_message
-							});
-						}
-					},
-					error: function (data) {
-						regenerateCORS();
-						$.unblockUI();
-						Swal.fire({
-							icon: 'error',
-							title: 'Error',
-							text: "Unable to process request at the moment! Please try again"
-						});
-					},
-				});
+			alertContainer.innerHTML = `
+				<div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+					${message}
+					<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+				</div>
+			`;
+
+			// Auto-hide after 10 seconds
+			setTimeout(() => {
+				const alert = alertContainer.querySelector('.alert');
+				if (alert) {
+					alert.remove();
+				}
+			}, 10000);
+		}
+
+		function setButtonLoading(isLoading) {
+			const button = document.getElementById('registerBtn');
+			const spinner = document.getElementById('loadingSpinner');
+			const buttonText = document.getElementById('buttonText');
+
+			if (isLoading) {
+				button.disabled = true;
+				spinner.style.display = 'inline-block';
+				buttonText.textContent = 'Creating Account...';
+			} else {
+				button.disabled = false;
+				spinner.style.display = 'none';
+				buttonText.textContent = 'Sign Up';
 			}
 		}
 
-		// Function to toggle password visibility
+		function validateForm() {
+			const email = document.getElementById('email').value.trim();
+			const password = document.getElementById('password').value;
+			const confirmPassword = document.getElementById('confirm_password').value;
+
+			if (!email) {
+				showAlert('Email is required', 'error');
+				return false;
+			}
+
+			if (!password) {
+				showAlert('Password is required', 'error');
+				return false;
+			}
+
+			if (password.length < 6) {
+				showAlert('Password must be at least 6 characters long', 'error');
+				return false;
+			}
+
+			if (password !== confirmPassword) {
+				showAlert('Passwords do not match', 'error');
+				return false;
+			}
+
+			// Email validation
+			const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+			if (!emailRegex.test(email)) {
+				showAlert('Please enter a valid email address', 'error');
+				return false;
+			}
+
+			return true;
+		}
+
+		function sendRegister(formId) {
+			// Prevent double submission
+			if (isSubmitting) {
+				return false;
+			}
+
+			// Clear previous alerts
+			document.getElementById('alertContainer').innerHTML = '';
+
+			// Validate form
+			if (!validateForm()) {
+				return false;
+			}
+
+			isSubmitting = true;
+			setButtonLoading(true);
+
+			const formData = $("#" + formId).serialize();
+
+			$.ajax({
+				type: "POST",
+				url: "utilities_default.php",
+				data: formData,
+				dataType: "json",
+				timeout: 30000, // 30 seconds timeout
+				success: function (response) {
+					isSubmitting = false;
+					setButtonLoading(false);
+
+					if (response.response_code === 0) {
+						// Success - show success message and redirect
+						showAlert(response.response_message, 'success');
+
+						// Show success alert with SweetAlert
+						Swal.fire({
+							icon: 'success',
+							title: 'Registration Successful!',
+							text: response.response_message,
+							timer: 3000,
+							showConfirmButton: false,
+							allowOutsideClick: false
+						});
+
+						// Redirect after 3 seconds
+						setTimeout(() => {
+							if (response.data && response.data.redirect) {
+								window.location.href = response.data.redirect;
+							} else {
+								window.location.href = 'verify_account.php';
+							}
+						}, 3000);
+
+					} else if (response.response_code === 77) {
+						// Email already exists and verified
+						showAlert(response.response_message, 'error');
+						Swal.fire({
+							icon: 'error',
+							title: 'Email Already Registered',
+							text: response.response_message +
+								' Please use a different email or try logging in.',
+							confirmButtonText: 'OK'
+						});
+
+					} else {
+						// Other errors
+						showAlert(response.response_message, 'error');
+						Swal.fire({
+							icon: 'error',
+							title: 'Registration Failed',
+							text: response.response_message,
+							confirmButtonText: 'Try Again'
+						});
+					}
+				},
+				error: function (xhr, status, error) {
+					isSubmitting = false;
+					setButtonLoading(false);
+
+					let errorMessage = 'Unable to process request at the moment. Please try again.';
+
+					if (status === 'timeout') {
+						errorMessage = 'Request timed out. Please check your connection and try again.';
+					} else if (xhr.status === 500) {
+						errorMessage = 'Server error occurred. Please try again later.';
+					}
+
+					showAlert(errorMessage, 'error');
+					Swal.fire({
+						icon: 'error',
+						title: 'Connection Error',
+						text: errorMessage,
+						confirmButtonText: 'OK'
+					});
+				}
+			});
+
+			return false;
+		}
+
+		// Password visibility toggle functionality
 		function togglePasswordVisibility(inputId, icon) {
-			const input = icon.previousElementSibling; // Get the input directly from the icon's previous sibling
+			const input = document.getElementById(inputId);
 			if (input.type === 'password') {
 				input.type = 'text';
 				icon.classList.remove('fa-eye');
@@ -231,24 +392,61 @@ $crossorigin = 'anonymous';
 			}
 		}
 
-		// Add event listeners for password fields
-		document.querySelectorAll('.password-container input').forEach(input => {
-			const icon = input.nextElementSibling;
+		// Initialize password toggle functionality
+		document.addEventListener('DOMContentLoaded', function () {
+			// Handle password field visibility
+			document.querySelectorAll('.password-container input').forEach(input => {
+				const icon = input.nextElementSibling;
 
-			// Show/hide eye icon based on input content
-			input.addEventListener('input', function () {
-				icon.style.display = this.value ? 'block' : 'none';
+				// Show/hide eye icon based on input content
+				input.addEventListener('input', function () {
+					icon.style.display = this.value ? 'block' : 'none';
+				});
+
+				// Toggle password visibility when clicking the eye icon
+				icon.addEventListener('click', function () {
+					togglePasswordVisibility(input.id, this);
+				});
 			});
 
-			// Toggle password visibility when clicking the eye icon
-			icon.addEventListener('click', function () {
-				togglePasswordVisibility(this.dataset.target, this);
+			// Handle form submission with Enter key
+			document.getElementById('registerForm').addEventListener('keypress', function (e) {
+				if (e.key === 'Enter') {
+					e.preventDefault();
+					sendRegister('registerForm');
+				}
+			});
+
+			// Real-time password confirmation validation
+			document.getElementById('confirm_password').addEventListener('input', function () {
+				const password = document.getElementById('password').value;
+				const confirmPassword = this.value;
+
+				if (confirmPassword && password !== confirmPassword) {
+					this.setCustomValidity('Passwords do not match');
+					this.classList.add('is-invalid');
+				} else {
+					this.setCustomValidity('');
+					this.classList.remove('is-invalid');
+				}
+			});
+
+			// Clear validation on password change
+			document.getElementById('password').addEventListener('input', function () {
+				const confirmPassword = document.getElementById('confirm_password');
+				if (confirmPassword.value) {
+					confirmPassword.dispatchEvent(new Event('input'));
+				}
 			});
 		});
+
+		// Prevent form resubmission on page refresh
+		window.addEventListener('beforeunload', function () {
+			if (isSubmitting) {
+				return 'Registration is in progress. Are you sure you want to leave?';
+			}
+		});
 	</script>
-
 </body>
-
-
 
 </html>
