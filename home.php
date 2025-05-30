@@ -194,7 +194,8 @@ header('X-Frame-Options: SAMEORIGIN');
                                 elseif (strpos($menu_name, 'offering') !== false) echo 'gift';
                                 elseif (strpos($menu_name, 'project') !== false) echo 'building';
                                 elseif (strpos($menu_name, 'donation') !== false) echo 'heart';
-                                elseif (strpos($money_name, 'transaction') !== false) echo 'exchange-alt';
+                                elseif (strpos($menu_name, 'transaction') !== false) echo 'exchange-alt';
+                                elseif (strpos($menu_name, 'department') !== false) echo 'building';
                                 else echo 'circle';
                             ?>" aria-hidden="true"></i>
        					<span class="align-middle"><?php echo ucfirst($value['menu_name']) ?></span>
@@ -202,23 +203,18 @@ header('X-Frame-Options: SAMEORIGIN');
        			</li>
        			<?php elseif ($value['has_sub_menu'] == true) : ?>
        			<li class="sidebar-item" id="menu-<?php echo $value['menu_id'] ?>">
-       				<a data-bs-target="#submenu-<?php echo $value['menu_id'] ?>" data-bs-toggle="collapse"
-       					class="sidebar-link collapsed" aria-expanded="false"
+       				<a data-bs-target="#submenu-<?php echo $value['menu_id'] ?>" data-bs-toggle="<?php echo $value['has_sub_menu'] ? 'collapse' : ''; ?>"
+       					class="sidebar-link <?php echo $value['has_sub_menu'] ? 'collapsed' : ''; ?>" 
+       					<?php if(!$value['has_sub_menu']): ?>
+       					href="javascript:loadNavPage('<?php echo $value['menu_url'] ?>','page', '<?php echo $value['menu_id'] ?>')"
+       					<?php endif; ?>
+       					aria-expanded="false"
        					title="<?php echo ucfirst($value['menu_name']) ?>">
-       					<i class="fa fa-<?php 
-                                // Assign appropriate icons for parent menus
-                                $menu_name = strtolower($value['menu_name']);
-                                if (strpos($menu_name, 'admin') !== false) echo 'shield';
-                                elseif (strpos($menu_name, 'setup') !== false) echo 'cogs';
-                                elseif (strpos($menu_name, 'pay') !== false) echo 'credit-card';
-                                elseif (strpos($menu_name, 'report') !== false) echo 'chart-line';
-                                elseif (strpos($menu_name, 'system') !== false) echo 'cogs';
-                                else echo 'folder';
-                            ?>" aria-hidden="true"></i>
+       					<i class="<?php echo !empty($value['icon']) ? $value['icon'] : 'fa fa-folder'; ?>" aria-hidden="true"></i>
        					<span class="align-middle"><?php echo ucfirst($value['menu_name']) ?></span>
        				</a>
-       				<ul id="submenu-<?php echo $value['menu_id'] ?>" class="sidebar-dropdown list-unstyled collapse"
-       					data-bs-parent="#sidebar">
+       				<?php if($value['has_sub_menu']): ?>
+       				<ul id="submenu-<?php echo $value['menu_id'] ?>" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
        					<?php foreach ($value['sub_menu'] as $sub_item) : ?>
        					<li class="sidebar-item" id="submenu-item-<?php echo $sub_item['menu_id'] ?>">
        						<a class="sidebar-link"
@@ -230,6 +226,7 @@ header('X-Frame-Options: SAMEORIGIN');
        					</li>
        					<?php endforeach; ?>
        				</ul>
+       				<?php endif; ?>
        			</li>
        			<?php endif; ?>
        			<?php endforeach; ?>
@@ -619,39 +616,64 @@ header('X-Frame-Options: SAMEORIGIN');
 
     
        <script>
-       	function confirmLogout() {
-       		Swal.fire({
-       			title: 'Sign Out?',
-       			text: 'Are you sure you want to sign out of your account?',
-       			icon: 'question',
-       			showCancelButton: true,
-       			confirmButtonColor: '#dc2626',
-       			cancelButtonColor: '#6b7280',
-       			confirmButtonText: 'Yes, Sign Out',
-       			cancelButtonText: 'Cancel',
-       			customClass: {
-       				popup: 'logout-confirmation'
-       			}
-       		}).then((result) => {
-       			if (result.isConfirmed) {
-       				// Show loading state
-       				Swal.fire({
-       					title: 'Signing Out...',
-       					text: 'Please wait while we sign you out.',
-       					allowOutsideClick: false,
-       					showConfirmButton: false,
-       					willOpen: () => {
-       						Swal.showLoading();
-       					}
-       				});
+       // Replace your existing confirmLogout function with this enhanced version
+       function confirmLogout() {
+       console.log('confirmLogout function called'); // Debug log
 
-       				// Redirect to logout
-       				setTimeout(() => {
-       					window.location.href = 'logout.php';
-       				}, 1000);
-       			}
-       		});
-       	}
+       // Check if SweetAlert is loaded
+       if (typeof Swal === 'undefined') {
+       console.error('SweetAlert not loaded, falling back to confirm dialog');
+       if (confirm('Are you sure you want to sign out?')) {
+       window.location.href = 'logout.php';
+       }
+       return;
+       }
+
+       Swal.fire({
+       title: 'Sign Out?',
+       text: 'Are you sure you want to sign out of your account?',
+       icon: 'question',
+       showCancelButton: true,
+       confirmButtonColor: '#dc2626',
+       cancelButtonColor: '#6b7280',
+       confirmButtonText: 'Yes, Sign Out',
+       cancelButtonText: 'Cancel',
+       customClass: {
+       popup: 'logout-confirmation'
+       }
+       }).then((result) => {
+       if (result.isConfirmed) {
+       // Show loading state
+       Swal.fire({
+       title: 'Signing Out...',
+       text: 'Please wait while we sign you out.',
+       allowOutsideClick: false,
+       showConfirmButton: false,
+       willOpen: () => {
+       Swal.showLoading();
+       }
+       });
+
+       // Redirect to logout
+       setTimeout(() => {
+       window.location.href = 'logout.php';
+       }, 1000);
+       }
+       }).catch((error) => {
+       console.error('SweetAlert error:', error);
+       // Fallback to direct logout
+       window.location.href = 'logout.php';
+       });
+       }
+
+       // Alternative function for direct logout (no confirmation)
+       function directLogout() {
+       window.location.href = 'logout.php';
+       }
+
+       // Ensure function is available globally
+       window.confirmLogout = confirmLogout;
+       window.directLogout = directLogout;
 
        	// Add active state management for menu items
        	document.addEventListener('DOMContentLoaded', function () {

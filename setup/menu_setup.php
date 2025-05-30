@@ -92,27 +92,24 @@ function doOnLoad()
                     </select>
                 </div>
            </div> 
-           <div class="col-sm-6 py-2">
-                  <label for="">Menu icon</label>
-                  <select name="icon" onchange="display_icon(this.value)" id="icon" class="form-control">
+           <div class="col-sm-6">
+               <div class="form-group">
+                   <label class="form-label">Menu Icon</label>
+                   <select name="icon" onchange="display_icon(this.value)" id="icon" class="form-control">
                        <option value="">::SELECT ICON::</option>
                        <?php
-                            foreach($fonts as $row)
-                            {
-                                $selected = ($cat[0]['icon'] == $row['code'])?"selected":"";
-                                echo "<option $selected value='".$row['code']."'>".str_replace("bi bi-","",$row['code'])."</option>";
-                            }
-                        ?>
+                           foreach($fonts as $row)
+                           {
+                               $selected = (isset($menu[0]['icon']) && $menu[0]['icon'] == $row['code']) ? "selected" : "";
+                               echo "<option $selected value='".$row['code']."'>".str_replace("bi bi-","",$row['code'])."</option>";
+                           }
+                       ?>
                    </select>
-                
+                   <div id="icon-display" class="mt-2 text-center" style="font-size:20px">
+                       <i class="<?php echo isset($menu[0]['icon']) ? $menu[0]['icon'] : $fonts[0]['code']; ?>"></i>
+                   </div>
+               </div>
            </div>
-        </div>
-        <div class="row mb-3">
-            <div class="col-sm-6">
-                <div id="icon-display" align="center" style="font-size:20px">
-                        <?php echo "<i class='bi ".$fonts[0]['code']."'></i>"; ?>
-                    </div>
-            </div>
         </div>
         
         <?php include("form-footer.php"); ?>
@@ -199,8 +196,11 @@ function doOnLoad()
             }
         
     }
-    function display_icon(ee)
-    {
-        $("#icon-display").html(`<i class="${ee}"></i>`);
+    function display_icon(icon_class) {
+        if(icon_class) {
+            document.getElementById('icon-display').innerHTML = '<i class="' + icon_class + '"></i>';
+        } else {
+            document.getElementById('icon-display').innerHTML = '';
+        }
     }
 </script>

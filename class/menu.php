@@ -28,27 +28,30 @@ class Menu extends dbobject
                 
                 $sql_2 = "select * from menu where parent_id = '$menu_id' and menu_id in (select menu_id from menugroup where role_id ='$role_id') order by menu_order";
                 $result2 = $this->db_query($sql_2);
-                $has_sub_menu = ($result2>0)?true:false;
-                if($result2 > 0)
+                $has_sub_menu = (!empty($result2)) ? true : false;
+                
+                if(!empty($result2))
                 {
                     foreach($result2 as $row_1)
                     {
                         $menu_id_1       = $row_1["menu_id"];
-                            $menu_url_1       = $row_1["menu_url"];
-                            $name             = $row_1["menu_name"];
-                            $sub_menu[]       = array(
-                                'menu_id'     => $menu_id_1,
-                                'menu_url'    => $menu_url_1,
-                                'name'        => $name
+                        $menu_url_1      = $row_1["menu_url"];
+                        $name            = $row_1["menu_name"];
+                        $sub_menu[]      = array(
+                            'menu_id'    => $menu_id_1,
+                            'menu_url'   => $menu_url_1,
+                            'name'       => $name
                             );
                     }
                 }
+                
                 $output[] = array(
                                 'menu_id'      => $menu_id,
                                 'menu_name'    => $menu_name,
                                 'parent_id'    => $parent_id,
                                 'menu_level'   => $menu_level,
                                 'icon'         => $icon,
+                    'menu_url'     => $url,
                                 'has_sub_menu' => $has_sub_menu,
                                 'sub_menu'     => $sub_menu
                             );
