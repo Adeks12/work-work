@@ -43,80 +43,66 @@
 </div>
 
 <script>
-    $(document).ready(function () {
-        // Initialize DataTable
-        $('#datatables-departments').DataTable({
-            destroy: true,
-            processing: true,
-            serverSide: true,
-            ajax: {
-                url: 'utilities.php',
-                type: 'POST',
-                data: {
-                    'op': 'Department.departmentList'
-                }
+var table;
+var editor;
+var op = "Department.departmentList"; // Fixed: Changed from departmentlist to departmentList (case sensitive)
+
+$(document).ready(function() {
+    table = $("#datatables-departments").DataTable({
+        "sDom": '<"top"i>rt<"bottom"flp><"clear">',
+        processing: true,
+        columnDefs: [{
+                orderable: false,
+                targets: 0
             },
-            columns: [{
-                    data: 0
-                }, // ID
-                {
-                    data: 1
-                }, // Department Name
-                {
-                    data: 2
-                }, // Department Code  
-                {
-                    data: 3
-                }, // Department Head
-                {
-                    data: 4
-                }, // Status
-                {
-                    data: 5
-                }, // Created Date
-                {
-                    data: 6, // Actions
-                    orderable: false,
-                    searchable: false
-                }
-            ],
-            order: [
-                [0, 'desc']
-            ],
-            pageLength: 25,
-            responsive: true,
-            language: {
-                processing: "Loading departments...",
-                emptyTable: "No departments found",
-                zeroRecords: "No matching departments found"
+            {
+                width: "100px",
+                targets: 6
             }
-        });
-    });
-
-    function editDepartment(departmentId) {
-        loadModal('setup/department_setup.php?op=edit&department_id=' + departmentId, 'modal_div');
-        $('#defaultModalPrimary').modal('show');
-    }
-
-    function deleteDepartment(departmentId) {
-        if (confirm('Are you sure you want to delete this department? This action cannot be undone.')) {
-            $.post('utilities.php', {
-                op: 'Department.deleteDepartment',
-                department_id: departmentId
-            }, function (response) {
-                if (response.response_code == 0) {
-                    alert('Department deleted successfully');
-                    $('#datatables-departments').DataTable().ajax.reload();
-                } else {
-                    alert('Error: ' + response.response_message);
-                }
-            }, 'json').fail(function () {
-                alert('An error occurred while deleting the department');
-            });
+        ],
+        serverSide: true,
+        paging: true,
+        oLanguage: {
+            sEmptyTable: "No record was found, please try another query"
+        },
+        ajax: {
+            url: "utilities.php",
+            type: "POST",
+            data: function(d, l) {
+                d.op = op;
+                d.li = Math.random();
+            }
         }
-    }
+    });
+});
 
-    function refreshDepartmentList() {
-        $('#datatables-departments').DataTable().ajax.reload();
+function editDepartment(departmentId) {
+    loadModal('setup/department_setup.php?op=edit&depmt_id=' + departmentId, 'modal_div'); // Fixed: Changed department_id to depmt_id
+    $('#defaultModalPrimary').modal('show');
+}
+
+function deleteDepartment(departmentId) {
+    if (confirm('Are you sure you want to delete this department? This action cannot be undone.')) {
+        $.post('utilities.php', {
+            op: 'Department.deleteDepartment',
+            depmt_id: departmentId // Fixed: Changed department_id to depmt_id to match backend
+        }, function (response) {
+            if (response.response_code == 0) {
+                alert('Department deleted successfully');
+                refreshDepartmentList();
+            } else {
+                alert('Error: ' + response.response_message);
+            }
+        }, 'json').fail(function () {
+            alert('An error occurred while deleting the department');
+        });
     }
+}
+
+function refreshDepartmentList() {
+    $('#datatables-departments').DataTable().ajax.reload();
+}
+
+// Global function to refresh table after modal operations
+window.refreshDepartmentList = refreshDepartmentList;
 </script>

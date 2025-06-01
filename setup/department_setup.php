@@ -9,13 +9,16 @@ $merchant_id = $doquery[0]['merchant_id'];
 
 if(isset($_REQUEST['op']) && $_REQUEST['op'] == 'edit')
 {
-    $department_id = $_REQUEST['depmt_id'];
-    $dept = $dbobject->db_query("SELECT * FROM departments WHERE id='$department_id' AND merchant_id='$merchant_id' LIMIT 1");
+    $department_id = $_REQUEST['depmt_id'] ?? $_REQUEST['department_id']; // Fixed: Added fallback
+    // Fixed: Changed table name from 'departments' to 'department'
+    $dept_result = $dbobject->db_query("SELECT * FROM department WHERE depmt_id='$department_id' AND merchant_id='$merchant_id' LIMIT 1", true);
+    $dept = $dept_result ? $dept_result[0] : null; // Fixed: Handle null result
     $operation = 'edit';
 }
 else
 {
     $operation = 'new';
+    $dept = null; // Fixed: Initialize dept for new operations
 }
 ?>
 
@@ -41,7 +44,7 @@ else
         <input type="hidden" name="operation" value="<?php echo $operation; ?>">
         <input type="hidden" name="merchant_id" id="merchant_id" value="<?php echo $merchant_id; ?>">
         <?php if($operation == "edit"): ?>
-        <input type="hidden" name="department_id" value="<?php echo $department_id; ?>">
+        <input type="hidden" name="depmt_id" value="<?php echo $department_id; ?>">
         <?php endif; ?>
 
         <div class="row">
@@ -49,7 +52,7 @@ else
                 <div class="form-group">
                     <label class="form-label">Department Name<span class="asterik">*</span></label>
                     <input type="text" name="depmt_name" class="form-control"
-                        value="<?php echo ($operation == "edit") ? $dept[0]['department_name'] : ""; ?>"
+                        value="<?php echo ($operation == "edit" && $dept) ? htmlspecialchars($dept['depmt_name']) : ""; ?>"
                         placeholder="Enter department name" autocomplete="off" required>
                     <div class="invalid-feedback">Please enter the department name.</div>
                 </div>
@@ -58,7 +61,7 @@ else
                 <div class="form-group">
                     <label class="form-label">Department Code<span class="asterik">*</span></label>
                     <input type="text" name="depmt_code" class="form-control"
-                        value="<?php echo ($operation == "edit") ? $dept[0]['department_code'] : ""; ?>"
+                        value="<?php echo ($operation == "edit" && $dept) ? htmlspecialchars($dept['depmt_code']) : ""; ?>"
                         placeholder="Enter department code (e.g., DEPT001)" autocomplete="off" required>
                     <div class="invalid-feedback">Please enter a valid department code.</div>
                 </div>
@@ -70,7 +73,7 @@ else
                 <div class="form-group">
                     <label class="form-label">Department Head<span class="asterik">*</span></label>
                     <input type="text" name="depmt_head"
-                        value="<?php echo ($operation == "edit") ? $dept[0]['department_head'] : "" ?>"
+                        value="<?php echo ($operation == "edit" && $dept) ? htmlspecialchars($dept['depmt_head']) : "" ?>"
                         class="form-control" placeholder="Enter department head name" autocomplete="off" required>
                     <div class="invalid-feedback">Please enter the department head name.</div>
                 </div>
@@ -83,10 +86,10 @@ else
                         <select class="form-select" name="depmt_status" id="depmt_status" required>
                             <option value="">:: SELECT STATUS ::</option>
                             <option value="1"
-                                <?php echo ($operation == "edit" && $dept[0]['department_status'] == '1') ? 'selected' : ''; ?>>
+                                <?php echo ($operation == "edit" && $dept && $dept['depmt_status'] == '1') ? 'selected' : ''; ?>>
                                 Active</option>
                             <option value="0"
-                                <?php echo ($operation == "edit" && $dept[0]['department_status'] == '0') ? 'selected' : ''; ?>>
+                                <?php echo ($operation == "edit" && $dept && $dept['depmt_status'] == '0') ? 'selected' : ''; ?>>
                                 Inactive</option>
                         </select>
                         <div class="invalid-feedback">Please select the department status.</div>
@@ -100,7 +103,7 @@ else
                 <div class="form-group">
                     <label class="form-label">Department Description</label>
                     <textarea name="depmt_description" class="form-control" rows="3"
-                        placeholder="Enter department description (optional)"><?php echo ($operation == "edit") ? $dept[0]['department_description'] : ""; ?></textarea>
+                        placeholder="Enter department description (optional)"><?php echo ($operation == "edit" && $dept) ? htmlspecialchars($dept['depmt_description'] ?? '') : ""; ?></textarea>
                 </div>
             </div>
         </div>
@@ -121,17 +124,17 @@ else
 <script>
 $(document).ready(function() {
     // Auto-generate department code based on department name
-    $("input[name='department_name']").on('blur', function () {
+    $("input[name='depmt_name']").on('blur', function () {
         var deptName = $(this).val().trim();
-        var deptCode = $("input[name='department_code']").val().trim();
+        var deptCode = $("input[name='depmt_code']").val().trim();
         if (deptName && !deptCode && "<?php echo $operation; ?>" === "new") {
             var code = deptName.substring(0, 4).toUpperCase() + Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-            $("input[name='department_code']").val(code);
+            $("input[name='depmt_code']").val(code);
         }
     });
 
     // Validate department code format
-    $("input[name='department_code']").on('blur', function () {
+    $("input[name='depmt_code']").on('blur', function () {
         var code = $(this).val().trim();
         if (code && !/^[A-Z0-9]{3,10}$/.test(code)) {
             showMessage("Department code should be 3-10 characters, uppercase letters and numbers only", "error");
@@ -173,37 +176,24 @@ function saveRecord() {
     var dd = $("#form1").serialize();
     $.post("utilities.php", dd, function(re) {
         console.log(re);
-        $("#save_facility").text("Save");
+        $("#save_facility").text("<?php echo ($operation == "edit") ? "Update Department" : "Create Department"; ?>");
         if (re.response_code == 0) {
             showMessage(re.response_message, "success");
-            getpage('user_list.php','page');
+            // Fixed: Refresh the table after successful operation
+            if (typeof refreshDepartmentList === 'function') {
+                refreshDepartmentList();
+            } else if (typeof getpage === 'function') {
+                getpage('user_list.php','page');
+            }
             setTimeout(()=>{
                 $('#defaultModalPrimary').modal('hide');
             },1000)
         } else {
             showMessage(re.response_message, "error");
         }
-    },'json');
+    },'json').fail(function() {
+        $("#save_facility").text("<?php echo ($operation == "edit") ? "Update Department" : "Create Department"; ?>");
+        showMessage("An error occurred while processing your request", "error");
+    });
 }
-// Auto-generate department code based on department name
-$("input[name='department_name']").on('blur', function() {
-        var deptName = $(this).val().trim();
-        var deptCode = $("input[name='department_code']").val().trim();
-        
-        // Only auto-generate if code field is empty and we're creating new department
-        if (deptName && !deptCode && "<?php echo $operation; ?>" === "new") {
-            var code = deptName.substring(0, 4).toUpperCase() + Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-            $("input[name='department_code']").val(code);
-        }
-    });
-    
-    // Validate department code format
-    $("input[name='department_code']").on('blur', function() {
-        var code = $(this).val().trim();
-        if (code && !/^[A-Z0-9]{3,10}$/.test(code)) {
-            showMessage("Department code should be 3-10 characters, uppercase letters and numbers only", "error");
-        } else {
-            $("#server_mssg").text("");
-        }
-    });
 </script>

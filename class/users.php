@@ -111,7 +111,7 @@ class Users extends dbobject
     }
     
     // Modified SQL to include registration_completed field
-    $sql = "SELECT username,firstname,lastname,sex,role_id,password,user_locked,user_disabled,pin_missed,day_1,day_2,day_3,day_4,day_5,day_6,day_7,passchg_logon,photo,church_id,registration_completed FROM userdata WHERE username = '$username' LIMIT 1";
+    $sql = "SELECT username,merchant_id,firstname,lastname,sex,role_id,password,user_locked,user_disabled,pin_missed,day_1,day_2,day_3,day_4,day_5,day_6,day_7,passchg_logon,photo,church_id,registration_completed FROM userdata WHERE username = '$username' LIMIT 1";
     $result = $this->db_query($sql,true);
     $count = count($result); 
         
@@ -145,6 +145,7 @@ class Users extends dbobject
                                 $_SESSION['firstname_sess'] = $result[0]['firstname'];
                                 $_SESSION['lastname_sess'] = $result[0]['lastname'];
                                 $_SESSION['sex_sess'] = $result[0]['sex'];
+                                $_SESSION['merchant_id'] = $result[0]['merchant_id'];
                                 $_SESSION['role_id_sess'] = $result[0]['role_id'];
                                 $_SESSION['church_id_sess'] = $result[0]['church_id'];
                                 $_SESSION['photo_file_sess'] = $result[0]['photo'];

@@ -555,6 +555,10 @@ header('X-Frame-Options: SAMEORIGIN');
 
     <!-- Scripts -->
     <script src="js/app.js"></script>
+    <script src="js/jquery-3.6.0.min.js"></script>
+    <script src="js/jquery.dataTables.min.js"></script>
+    <script src="js/sweet_alerts.js"></script>
+    <script src="js/jquery.blockUI.js"></script>
     <script src="js/sweet_alerts.js"></script>
     <script src="js/jquery.blockUI.js"></script>
     <script src="js/main.js"></script>
