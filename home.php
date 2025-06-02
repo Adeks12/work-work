@@ -196,6 +196,7 @@ header('X-Frame-Options: SAMEORIGIN');
                                 elseif (strpos($menu_name, 'donation') !== false) echo 'heart';
                                 elseif (strpos($menu_name, 'transaction') !== false) echo 'exchange-alt';
                                 elseif (strpos($menu_name, 'department') !== false) echo 'building';
+                                elseif (strpos($menu_name, 'staff') !== false) echo 'user-tie';
                                 else echo 'circle';
                             ?>" aria-hidden="true"></i>
        					<span class="align-middle"><?php echo ucfirst($value['menu_name']) ?></span>

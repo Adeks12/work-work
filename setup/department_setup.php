@@ -9,16 +9,39 @@ $merchant_id = $doquery[0]['merchant_id'];
 
 if(isset($_REQUEST['op']) && $_REQUEST['op'] == 'edit')
 {
-    $department_id = $_REQUEST['depmt_id'] ?? $_REQUEST['department_id']; // Fixed: Added fallback
-    // Fixed: Changed table name from 'departments' to 'department'
-    $dept_result = $dbobject->db_query("SELECT * FROM department WHERE depmt_id='$department_id' AND merchant_id='$merchant_id' LIMIT 1", true);
-    $dept = $dept_result ? $dept_result[0] : null; // Fixed: Handle null result
-    $operation = 'edit';
+    // Fixed: Use consistent parameter name and add debugging
+    $department_id = $_REQUEST['depmt_id'] ?? $_REQUEST['department_id'] ?? '';
+    
+    // Debug: Add error checking
+    if(empty($department_id)) {
+        echo "<script>console.log('Error: Department ID is missing');</script>";
+        $dept = null;
+        $operation = 'new';
+    } else {
+        // Fixed: Add proper error handling and debugging
+        $sql = "SELECT * FROM department WHERE depmt_id='$department_id' AND merchant_id='$merchant_id' LIMIT 1";
+        $dept_result = $dbobject->db_query($sql, true);
+        
+        // Debug output
+        echo "<script>console.log('Department ID: $department_id');</script>";
+        echo "<script>console.log('SQL Query: $sql');</script>";
+        echo "<script>console.log('Query Result: " . json_encode($dept_result) . "');</script>";
+        
+        if($dept_result && is_array($dept_result) && count($dept_result) > 0) {
+            $dept = $dept_result[0];
+            $operation = 'edit';
+            echo "<script>console.log('Department Data: " . json_encode($dept) . "');</script>";
+        } else {
+            echo "<script>console.log('No department found with ID: $department_id');</script>";
+            $dept = null;
+            $operation = 'new';
+        }
+    }
 }
 else
 {
     $operation = 'new';
-    $dept = null; // Fixed: Initialize dept for new operations
+    $dept = null;
 }
 ?>
 
@@ -26,8 +49,13 @@ else
     #login_days>label {
         margin-right: 10px;
     }
+
     .asterik {
         color: red;
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
     }
 </style>
 <div class="modal-header">
@@ -51,31 +79,32 @@ else
             <div class="col-sm-6">
                 <div class="form-group">
                     <label class="form-label">Department Name<span class="asterik">*</span></label>
-                    <input type="text" name="depmt_name" class="form-control"
-                        value="<?php echo ($operation == "edit" && $dept) ? htmlspecialchars($dept['depmt_name']) : ""; ?>"
+                    <input type="text" name="depmt_name" id="depmt_name" class="form-control"
+                        value="<?php echo ($operation == "edit" && $dept && isset($dept['depmt_name'])) ? htmlspecialchars($dept['depmt_name']) : ""; ?>"
                         placeholder="Enter department name" autocomplete="off" required>
                     <div class="invalid-feedback">Please enter the department name.</div>
                 </div>
             </div>
             <div class="col-sm-6">
                 <div class="form-group">
-                    <label class="form-label">Department Code<span class="asterik">*</span></label>
-                    <input type="text" name="depmt_code" class="form-control"
-                        value="<?php echo ($operation == "edit" && $dept) ? htmlspecialchars($dept['depmt_code']) : ""; ?>"
-                        placeholder="Enter department code (e.g., DEPT001)" autocomplete="off" required>
-                    <div class="invalid-feedback">Please enter a valid department code.</div>
+                    <label class="form-label">Department Head<span class="asterik">*</span></label>
+                    <input type="text" name="depmt_head" id="depmt_head"
+                        value="<?php echo ($operation == "edit" && $dept && isset($dept['depmt_head'])) ? htmlspecialchars($dept['depmt_head']) : "" ?>"
+                        class="form-control" placeholder="Enter department head name" autocomplete="off" required>
+                    <div class="invalid-feedback">Please enter the department head name.</div>
                 </div>
             </div>
         </div>
 
+        <?php if($operation == "edit"): ?>
         <div class="row">
             <div class="col-sm-6">
                 <div class="form-group">
-                    <label class="form-label">Department Head<span class="asterik">*</span></label>
-                    <input type="text" name="depmt_head"
-                        value="<?php echo ($operation == "edit" && $dept) ? htmlspecialchars($dept['depmt_head']) : "" ?>"
-                        class="form-control" placeholder="Enter department head name" autocomplete="off" required>
-                    <div class="invalid-feedback">Please enter the department head name.</div>
+                    <label class="form-label">Department Code</label>
+                    <input type="text" name="depmt_code" class="form-control"
+                        value="<?php echo ($dept && isset($dept['depmt_code'])) ? htmlspecialchars($dept['depmt_code']) : ""; ?>"
+                        placeholder="Auto-generated" readonly>
+                    <small class="text-muted">Department code is auto-generated and cannot be changed</small>
                 </div>
             </div>
             <div class="col-sm-6">
@@ -86,10 +115,10 @@ else
                         <select class="form-select" name="depmt_status" id="depmt_status" required>
                             <option value="">:: SELECT STATUS ::</option>
                             <option value="1"
-                                <?php echo ($operation == "edit" && $dept && $dept['depmt_status'] == '1') ? 'selected' : ''; ?>>
+                                <?php echo ($operation == "edit" && $dept && isset($dept['depmt_status']) && $dept['depmt_status'] == '1') ? 'selected' : ''; ?>>
                                 Active</option>
                             <option value="0"
-                                <?php echo ($operation == "edit" && $dept && $dept['depmt_status'] == '0') ? 'selected' : ''; ?>>
+                                <?php echo ($operation == "edit" && $dept && isset($dept['depmt_status']) && $dept['depmt_status'] == '0') ? 'selected' : ''; ?>>
                                 Inactive</option>
                         </select>
                         <div class="invalid-feedback">Please select the department status.</div>
@@ -97,13 +126,38 @@ else
                 </div>
             </div>
         </div>
+        <?php else: ?>
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="form-group">
+                    <label class="form-label">Department Code</label>
+                    <input type="text" class="form-control" value="Auto-generated from department name" readonly>
+                    <small class="text-muted">Department code will be auto-generated based on department name</small>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="form-group">
+                    <label class="form-label" style="display:block !important">Department Status<span
+                            class="asterik">*</span></label>
+                    <div class="input-group">
+                        <select class="form-select" name="depmt_status" id="depmt_status" required>
+                            <option value="">:: SELECT STATUS ::</option>
+                            <option value="1" selected>Active</option>
+                            <option value="0">Inactive</option>
+                        </select>
+                        <div class="invalid-feedback">Please select the department status.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
 
         <div class="row">
             <div class="col-sm-12">
                 <div class="form-group">
                     <label class="form-label">Department Description</label>
                     <textarea name="depmt_description" class="form-control" rows="3"
-                        placeholder="Enter department description (optional)"><?php echo ($operation == "edit" && $dept) ? htmlspecialchars($dept['depmt_description'] ?? '') : ""; ?></textarea>
+                        placeholder="Enter department description (optional)"><?php echo ($operation == "edit" && $dept && isset($dept['depmt_description'])) ? htmlspecialchars($dept['depmt_description']) : ""; ?></textarea>
                 </div>
             </div>
         </div>
@@ -122,78 +176,107 @@ else
 </div>
 
 <script>
-$(document).ready(function() {
-    // Auto-generate department code based on department name
-    $("input[name='depmt_name']").on('blur', function () {
-        var deptName = $(this).val().trim();
-        var deptCode = $("input[name='depmt_code']").val().trim();
-        if (deptName && !deptCode && "<?php echo $operation; ?>" === "new") {
-            var code = deptName.substring(0, 4).toUpperCase() + Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-            $("input[name='depmt_code']").val(code);
-        }
-    });
+    $(document).ready(function () {
+        // Debug: Log form data on page load
+        console.log('Operation: <?php echo $operation; ?>');
+        console.log('Department Name Value: ' + $('#depmt_name').val());
+        console.log('Department Head Value: ' + $('#depmt_head').val());
 
-    // Validate department code format
-    $("input[name='depmt_code']").on('blur', function () {
-        var code = $(this).val().trim();
-        if (code && !/^[A-Z0-9]{3,10}$/.test(code)) {
-            showMessage("Department code should be 3-10 characters, uppercase letters and numbers only", "error");
-            $(this).addClass('is-invalid');
-        } else {
-            $("#server_mssg").text("");
-            $(this).removeClass('is-invalid');
-        }
-    });
-});
-
-function showMessage(message, type) {
-    $("#server_mssg").text(message);
-    if (type === "success") {
-        $("#server_mssg").css({'color':'green','font-weight':'bold'});
-    } else {
-        $("#server_mssg").css({'color':'red','font-weight':'bold'});
-    }
-}
-
-// Save record function
-function saveRecord() {
-    // Client-side validation
-    var valid = true;
-    $('#form1 [required]').each(function() {
-        if (!$(this).val()) {
-            $(this).addClass('is-invalid');
-            valid = false;
-        } else {
-            $(this).removeClass('is-invalid');
-        }
-    });
-    if (!valid) {
-        showMessage("Please fill all required fields.", "error");
-        return;
-    }
-
-    $("#save_facility").text("Loading......");
-    var dd = $("#form1").serialize();
-    $.post("utilities.php", dd, function(re) {
-        console.log(re);
-        $("#save_facility").text("<?php echo ($operation == "edit") ? "Update Department" : "Create Department"; ?>");
-        if (re.response_code == 0) {
-            showMessage(re.response_message, "success");
-            // Fixed: Refresh the table after successful operation
-            if (typeof refreshDepartmentList === 'function') {
-                refreshDepartmentList();
-            } else if (typeof getpage === 'function') {
-                getpage('user_list.php','page');
+        // Form validation styling
+        $('#form1 input, #form1 select, #form1 textarea').on('blur change', function () {
+            if ($(this).prop('required') && !$(this).val()) {
+                $(this).addClass('is-invalid');
+            } else {
+                $(this).removeClass('is-invalid');
             }
-            setTimeout(()=>{
-                $('#defaultModalPrimary').modal('hide');
-            },1000)
-        } else {
-            showMessage(re.response_message, "error");
-        }
-    },'json').fail(function() {
-        $("#save_facility").text("<?php echo ($operation == "edit") ? "Update Department" : "Create Department"; ?>");
-        showMessage("An error occurred while processing your request", "error");
+        });
     });
-}
+
+    function showMessage(message, type) {
+        $("#server_mssg").html('<div class="alert alert-' + (type === 'success' ? 'success' : 'danger') +
+            ' alert-dismissible"><button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+            message + '</div>');
+
+        // Auto-hide success messages
+        if (type === 'success') {
+            setTimeout(function () {
+                $("#server_mssg").html('');
+            }, 3000);
+        }
+    }
+
+    // Save record function
+    function saveRecord() {
+        // Client-side validation
+        var valid = true;
+        var firstInvalidField = null;
+
+        $('#form1 [required]').each(function () {
+            if (!$(this).val().trim()) {
+                $(this).addClass('is-invalid');
+                if (!firstInvalidField) {
+                    firstInvalidField = $(this);
+                }
+                valid = false;
+            } else {
+                $(this).removeClass('is-invalid');
+            }
+        });
+
+        if (!valid) {
+            showMessage("Please fill all required fields.", "error");
+            if (firstInvalidField) {
+                firstInvalidField.focus();
+            }
+            return;
+        }
+
+        // Additional validation for department name
+        var deptName = $("#depmt_name").val().trim();
+        if (deptName.length < 2) {
+            showMessage("Department name must be at least 2 characters long.", "error");
+            $("#depmt_name").focus();
+            return;
+        }
+
+        $("#save_facility").html('<i class="fas fa-spinner fa-spin"></i> Processing...');
+        $("#save_facility").prop('disabled', true);
+
+        var dd = $("#form1").serialize();
+
+        $.post("utilities.php", dd, function (re) {
+            console.log(re);
+            $("#save_facility").html("<?php echo ($operation == 'edit') ? 'Update Department' : 'Create Department'; ?>");
+            $("#save_facility").prop('disabled', false);
+
+            if (re.response_code == 0) {
+                showMessage(re.response_message, "success");
+
+                // Refresh the table after successful operation
+                if (typeof refreshDepartmentList === 'function') {
+                    refreshDepartmentList();
+                } else if (typeof getpage === 'function') {
+                    getpage('user_list.php', 'page');
+                }
+
+                // Clear form for new entries
+                if ("<?php echo $operation; ?>" === "new") {
+                    $("#form1")[0].reset();
+                    $("#depmt_status").val('1'); // Reset to Active
+                }
+
+                setTimeout(function () {
+                    $('#defaultModalPrimary').modal('hide');
+                }, 1500);
+
+            } else {
+                showMessage(re.response_message, "error");
+            }
+        }, 'json').fail(function (xhr, status, error) {
+            console.log("Ajax Error:", xhr.responseText);
+            $("#save_facility").html("<?php echo ($operation == 'edit') ? 'Update Department' : 'Create Department'; ?>");
+            $("#save_facility").prop('disabled', false);
+            showMessage("An error occurred while processing your request. Please try again.", "error");
+        });
+    }
 </script>

@@ -1,1 +1,1 @@
-insert into department (merchant_id,depmt_name,depmt_code,depmt_head,depmt_status,depmt_description,created_at,created_officer) VALUES ('PRO-673304','Enterprize Department','ENTE587','Mrs. Amarachi Chukwuma','1','Manages the technical aspect of the company.','2025-06-01 23:45:34','Jesuslovestestimony@gmail.com')
+insert into item_category (merchant_id,item_cat_name,item_status,item_cat_description,created_at,created_officer,item_code) VALUES ('PRO-773289','Electronics','1','Electrically powered','2025-06-02 16:30:33','Jesuslovestestimony@gmail.com','MIN476')

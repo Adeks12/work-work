@@ -18,8 +18,10 @@ $dbobject = new dbobject();
     <h6 class="card-subtitle text-muted">The report contains Menus that have been setup in the system.</h6>
   </div>
   <div class="card-body">
-    <a class="btn btn-warning" onclick="loadModal('setup/menu_setup.php','modal_div')" href="javascript:void(0)" data-toggle="modal" data-target="#defaultModalPrimary">Create Menu</a>
-    <a class="btn btn-primary text-right" onclick="loadModal('setup/menu_group.php','modal_div')" href="javascript:void(0)" data-toggle="modal" data-target="#defaultModalPrimary">Create Group</a>
+    <a class="btn btn-warning" onclick="loadModal('setup/menu_setup.php','modal_div')" href="javascript:void(0)"
+      data-toggle="modal" data-target="#defaultModalPrimary">Create Menu</a>
+    <a class="btn btn-primary text-right" onclick="loadModal('setup/menu_group.php','modal_div')"
+      href="javascript:void(0)" data-toggle="modal" data-target="#defaultModalPrimary">Create Group</a>
     <div id="datatables-basic_wrapper" class="dataTables_wrapper dt-bootstrap4 no-footer">
       <div class="row">
         <div class="col-sm-3">
@@ -58,7 +60,7 @@ $dbobject = new dbobject();
   var table;
   var editor;
   var op = "Menu.menuList";
-  $(document).ready(function() {
+  $(document).ready(function () {
     table = $("#page_list").DataTable({
       processing: true,
       columnDefs: [{
@@ -74,7 +76,7 @@ $dbobject = new dbobject();
       ajax: {
         url: "utilities.php",
         type: "POST",
-        data: function(d, l) {
+        data: function (d, l) {
           d.op = op;
           d.li = Math.random();
           //          d.start_date = $("#start_date").val();
@@ -94,15 +96,18 @@ $dbobject = new dbobject();
       $.blockUI();
       $.ajax({
         url: "utilities.php",
-        data: {op: "Menu.deleteMenu", menu_id: id},
+        data: {
+          op: "Menu.deleteMenu",
+          menu_id: id
+        },
         type: "post",
         dataType: "json",
-        success: function(re){
+        success: function (re) {
           $.unblockUI();
           alert(re.response_message);
           getpage('menu_list.php', "page");
         },
-        error: function(re){
+        error: function (re) {
           $.unblockUI();
           alert("Request could not be processed at the moment!");
         }
@@ -115,7 +120,7 @@ $dbobject = new dbobject();
     //        alert('dfd');
     $('#' + div).html("<h2>Loading....</h2>");
     //        $('#'+div).block({ message: null });
-    $.post(url, {}, function(re) {
+    $.post(url, {}, function (re) {
       $('#' + div).html(re);
     })
   }

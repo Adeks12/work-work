@@ -1,5 +1,5 @@
 <?php
-include_once("dbobject.php");
+// include_once("dbobject.php");
 error_reporting(E_ALL);
 ini_set('display_errors', 1);   
 
@@ -26,8 +26,10 @@ class Department extends dbobject
                 'db' => 'depmt_id', 
                 'dt' => 6,
                 'formatter' => function( $d, $row ) {
-                    return '<button class="btn btn-sm btn-primary" onclick="editDepartment('.$d.')">Edit</button> 
-                            <button class="btn btn-sm btn-danger" onclick="deleteDepartment('.$d.')">Delete</button>';
+                    return '<div class="d-flex gap-1">
+                        <button class="btn btn-sm btn-primary" onclick="editdepartment('.$d.')">Edit</button>
+                        <button class="btn btn-sm btn-danger" onclick="deletedepartment('.$d.')">Delete</button>
+                    </div>';
                 }
             )
         );
@@ -35,31 +37,28 @@ class Department extends dbobject
         // Filter by merchant_id for security
         $merchant_id = $_SESSION['merchant_id'] ?? $data['merchant_id'] ?? '';
         $filter = " AND merchant_id = '$merchant_id'";
-        
-        // Add search functionality - Fixed: Check for search parameters in DataTables format
-        if (!empty($data['search']['value'])) {
-            $search_value = mysqli_real_escape_string($this->connection, $data['search']['value']);
-            $filter .= " AND (depmt_name LIKE '%$search_value%' OR depmt_code LIKE '%$search_value%' OR depmt_head LIKE '%$search_value%')";
-        }
-        
-        // Individual column search (if implemented)
-        if (!empty($data['search_name'])) {
-            $search_name = mysqli_real_escape_string($this->connection, $data['search_name']);
-            $filter .= " AND depmt_name LIKE '%$search_name%'";
-        }
-        
-        if (!empty($data['search_code'])) {
-            $search_code = mysqli_real_escape_string($this->connection, $data['search_code']);
-            $filter .= " AND depmt_code LIKE '%$search_code%'";
-        }
-        
-        if (isset($data['search_status']) && $data['search_status'] !== '') {
-            $search_status = mysqli_real_escape_string($this->connection, $data['search_status']);
-            $filter .= " AND depmt_status = '$search_status'";
-        }
-        
+
         $datatableEngine = new engine();
         echo $datatableEngine->generic_table($data, $table_name, $columner, $primary_key, $filter);
+    }
+
+    private function generateDepartmentCode($departmentName, $merchantId) {
+        // Get first 3 letters of department name, convert to uppercase
+        $prefix = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $departmentName), 0, 3));
+        
+        // If department name has less than 3 letters, pad with 'X'
+        $prefix = str_pad($prefix, 3, 'X');
+        
+        // Generate unique code
+        do {
+            $randomNumber = str_pad(rand(0, 999), 3, '0', STR_PAD_LEFT);
+            $code = $prefix . $randomNumber;
+            
+            // Check if this code already exists for this merchant
+            $checkCode = $this->db_query("SELECT depmt_id FROM department WHERE depmt_code = '$code' AND merchant_id = '$merchantId'", true);
+        } while ($checkCode && count($checkCode) > 0);
+        
+        return $code;
     }
 
     public function createDepartment($data)
@@ -68,17 +67,20 @@ class Department extends dbobject
             $data['created_at'] = date("Y-m-d H:i:s");
             $data['created_officer'] = $_SESSION['username_sess'];
             
-            // Validation rules
+            // Auto-generate department code
+            if($data['operation'] == 'new') {
+                $data['depmt_code'] = $this->generateDepartmentCode($data['depmt_name'], $data['merchant_id']);
+            }
+            
+            // Validation rules - removed depmt_code from required fields
             $validation = $this->validate($data,
                 array(
                     'depmt_name' => 'required',
-                    'depmt_code' => 'required',
                     'depmt_head' => 'required',
                     'depmt_status' => 'required'
                 ),
                 array(
                     'depmt_name' => 'Department Name',
-                    'depmt_code' => 'Department Code',
                     'depmt_head' => 'Department Head', 
                     'depmt_status' => 'Department Status'
                 )
@@ -88,13 +90,6 @@ class Department extends dbobject
             {
                 if($data['operation'] == 'new')
                 {
-                    // Check for duplicate department code within same merchant
-                    $checkCode = $this->db_query("SELECT depmt_id FROM department WHERE depmt_code = '{$data['depmt_code']}' AND merchant_id = '{$data['merchant_id']}'", true);
-                    
-                    if($checkCode && count($checkCode) > 0) {
-                        return json_encode(array("response_code" => 21, "response_message" => "Department code already exists"));
-                    }
-                    
                     // Check for duplicate department name within same merchant
                     $checkName = $this->db_query("SELECT depmt_id FROM department WHERE depmt_name = '{$data['depmt_name']}' AND merchant_id = '{$data['merchant_id']}'", true);
                     if($checkName && count($checkName) > 0) {
@@ -106,7 +101,10 @@ class Department extends dbobject
                     
                     if($res == "1")
                     {
-                        return json_encode(array("response_code" => 0, "response_message" => "Department created successfully"));
+                        return json_encode(array(
+                            "response_code" => 0, 
+                            "response_message" => "Department created successfully with code: " . $data['depmt_code']
+                        ));
                     }
                     else
                     {
@@ -115,13 +113,6 @@ class Department extends dbobject
                 }
                 elseif($data['operation'] == 'edit')
                 {
-                    // Check for duplicate department code within same merchant (excluding current record)
-                    $checkCode = $this->db_query("SELECT depmt_id FROM department WHERE depmt_code = '{$data['depmt_code']}' AND merchant_id = '{$data['merchant_id']}' AND depmt_id != '{$data['depmt_id']}'", true);
-                    
-                    if($checkCode && count($checkCode) > 0) {
-                        return json_encode(array("response_code" => 21, "response_message" => "Department code already exists"));
-                    }
-                    
                     // Check for duplicate department name within same merchant (excluding current record)
                     $checkName = $this->db_query("SELECT depmt_id FROM department WHERE depmt_name = '{$data['depmt_name']}' AND merchant_id = '{$data['merchant_id']}' AND depmt_id != '{$data['depmt_id']}'", true);
                     if($checkName && count($checkName) > 0) {
@@ -130,11 +121,14 @@ class Department extends dbobject
                     
                     $data['updated_at'] = date("Y-m-d H:i:s");
                     $data['updated_officer'] = $_SESSION['username_sess'];
+                    $merchant_id = $data['merchant_id'];
+                    $depmt_id = $data['depmt_id'];
+                   
                     
                     $excluded_keys = ['op', 'operation', 'nrfa-csrf-token-label'];
-                    $whereClause = "depmt_id = '{$data['depmt_id']}' AND merchant_id = '{$data['merchant_id']}'";
-                    $res = $this->doUpdate('department', $data, $excluded_keys, $whereClause);
-                    
+                    // $whereClause = [depmt_id = '{$data['depmt_id']}' AND merchant_id = '{$data['merchant_id']}'];
+                    $res = $this->doUpdate('department', $data, $excluded_keys, ['depmt_id' => $depmt_id, 'merchant_id' => $merchant_id]);                   
+                                      
                     if($res == "1" || $res === true)
                     {
                         return json_encode(array("response_code" => 0, "response_message" => "Department updated successfully"));
@@ -153,7 +147,7 @@ class Department extends dbobject
         catch(Exception $e)
         {
             error_log("Department Creation Error: " . $e->getMessage());
-            return json_encode(array("response_code" => 500, "response_message" => "An error occurred while processing your request"));
+            return json_encode(array("response_code" => 500, "response_message" => $e->getMessage()));
         }
     }
     
@@ -185,14 +179,14 @@ class Department extends dbobject
             $department_id = $data['depmt_id'] ?? $data['department_id'];
             $merchant_id = $_SESSION['merchant_id'] ?? $data['merchant_id'];
 
-            // Check if department is being used by any employees/members
-            $checkUsage = $this->db_query("SELECT COUNT(*) as count FROM employees WHERE department_id = '$department_id'", true);
-            if($checkUsage && $checkUsage[0]['count'] > 0) {
-                return json_encode(array("response_code" => 23, "response_message" => "Cannot delete department. It is currently assigned to employees."));
-            }
+            // // Check if department is being used by any employees/members
+            // $checkUsage = $this->db_query("SELECT COUNT(*) as count FROM employees WHERE department_id = '$department_id'", true);
+            // if($checkUsage && $checkUsage[0]['count'] > 0) {
+            //     return json_encode(array("response_code" => 23, "response_message" => "Cannot delete department. It is currently assigned to employees."));
+            // }
 
             $sql = "DELETE FROM department WHERE depmt_id = '$department_id' AND merchant_id = '$merchant_id'";
-            $result = $this->db_query($sql);
+            $result = $this->db_query($sql, false);
 
             if($result) {
                 return json_encode(array("response_code" => 0, "response_message" => "Department deleted successfully"));
@@ -203,7 +197,7 @@ class Department extends dbobject
         catch(Exception $e)
         {
             error_log("Delete Department Error: " . $e->getMessage());
-            return json_encode(array("response_code" => 500, "response_message" => "An error occurred while deleting department"));
+            return json_encode(array("response_code" => 500, "response_message" => $e->getMessage()));
         }
     }
     

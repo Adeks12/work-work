@@ -19,10 +19,26 @@
                             <h6 class="card-subtitle text-muted">Manage your organization's departments</h6>
                         </div>
                         <div class="card-body">
+                            <!-- Search Box -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <div class="input-group">
+                                        <input type="text" id="searchInput" class="form-control"
+                                            placeholder="Search departments...">
+                                        <button class="btn btn-outline-secondary" type="button" id="searchBtn">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                        <button class="btn btn-outline-secondary" type="button" id="clearBtn">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
                             <table id="datatables-departments" class="table table-striped w-100">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
+                                        <th>S/N</th>
                                         <th>Department Name</th>
                                         <th>Department Code</th>
                                         <th>Department Head</th>
@@ -43,66 +59,124 @@
 </div>
 
 <script>
-var table;
-var editor;
-var op = "Department.departmentList"; // Fixed: Changed from departmentlist to departmentList (case sensitive)
+    var table;
+    var editor;
+    var op = "Department.departmentList";
 
-$(document).ready(function() {
-    table = $("#datatables-departments").DataTable({
-        "sDom": '<"top"i>rt<"bottom"flp><"clear">',
-        processing: true,
-        columnDefs: [{
-                orderable: false,
-                targets: 0
+    $(document).ready(function () {
+        table = $("#datatables-departments").DataTable({
+            "sDom": '<"top"i>rt<"bottom"flp><"clear">',
+            processing: true,
+            columnDefs: [{
+                    orderable: false,
+                    targets: 0
+                },
+                {
+                    width: "100px",
+                    targets: 6
+                }
+            ],
+            serverSide: true,
+            paging: true,
+            pageLength: 25,
+            oLanguage: {
+                sEmptyTable: "No record was found, please try another query",
+                sProcessing: "Loading departments..."
             },
-            {
-                width: "100px",
-                targets: 6
-            }
-        ],
-        serverSide: true,
-        paging: true,
-        oLanguage: {
-            sEmptyTable: "No record was found, please try another query"
-        },
-        ajax: {
-            url: "utilities.php",
-            type: "POST",
-            data: function(d, l) {
-                d.op = op;
-                d.li = Math.random();
-            }
-        }
-    });
-});
-
-function editDepartment(departmentId) {
-    loadModal('setup/department_setup.php?op=edit&depmt_id=' + departmentId, 'modal_div'); // Fixed: Changed department_id to depmt_id
-    $('#defaultModalPrimary').modal('show');
-}
-
-function deleteDepartment(departmentId) {
-    if (confirm('Are you sure you want to delete this department? This action cannot be undone.')) {
-        $.post('utilities.php', {
-            op: 'Department.deleteDepartment',
-            depmt_id: departmentId // Fixed: Changed department_id to depmt_id to match backend
-        }, function (response) {
-            if (response.response_code == 0) {
-                alert('Department deleted successfully');
-                refreshDepartmentList();
-            } else {
-                alert('Error: ' + response.response_message);
-            }
-        }, 'json').fail(function () {
-            alert('An error occurred while deleting the department');
+            ajax: {
+                url: "utilities.php",
+                type: "POST",
+                data: function (d, l) {
+                    d.op = op;
+                    d.li = Math.random();
+                    // Add search parameter if exists
+                    if ($("#searchInput").val()) {
+                        d.search = {
+                            value: $("#searchInput").val()
+                        };
+                    }
+                },
+                error: function (xhr, error, thrown) {
+                    console.log("DataTable Error:", error, thrown);
+                    alert("Error loading data. Please refresh the page.");
+                }
+            },
+            columns: [{
+                    data: 0,
+                    name: 'depmt_id'
+                },
+                {
+                    data: 1,
+                    name: 'depmt_name'
+                },
+                {
+                    data: 2,
+                    name: 'depmt_code'
+                },
+                {
+                    data: 3,
+                    name: 'depmt_head'
+                },
+                {
+                    data: 4,
+                    name: 'depmt_status'
+                },
+                {
+                    data: 5,
+                    name: 'created_at'
+                },
+                {
+                    data: 6,
+                    name: 'actions',
+                    orderable: false
+                }
+            ]
         });
+
+        // Search functionality
+        $("#searchBtn").click(function () {
+            table.ajax.reload();
+        });
+
+        $("#clearBtn").click(function () {
+            $("#searchInput").val('');
+            table.ajax.reload();
+        });
+
+        $("#searchInput").keypress(function (e) {
+            if (e.which == 13) { // Enter key
+                table.ajax.reload();
+            }
+        });
+    });
+
+    function editDepartment(departmentId) {
+        loadModal('setup/department_setup.php?op=edit&depmt_id=' + departmentId, 'modal_div');
+        $('#defaultModalPrimary').modal('show');
     }
-}
 
-function refreshDepartmentList() {
-    $('#datatables-departments').DataTable().ajax.reload();
-}
+    function deleteDepartment(departmentId) {
+        if (confirm('Are you sure you want to delete this department? This action cannot be undone.')) {
+            $.post('utilities.php', {
+                op: 'Department.deleteDepartment',
+                depmt_id: departmentId
+            }, function (response) {
+                if (response.response_code == 0) {
+                    alert('Department deleted successfully');
+                    refreshDepartmentList();
+                } else {
+                    alert('Error: ' + response.response_message);
+                }
+            }, 'json').fail(function () {
+                alert('An error occurred while deleting the department');
+            });
+        }
+    }
 
-// Global function to refresh table after modal operations
-window.refreshDepartmentList = refreshDepartmentList;
+    function refreshDepartmentList() {
+        $('#datatables-departments').DataTable().ajax.reload();
+    }
+
+    // Global function to refresh table after modal operations
+    window.refreshDepartmentList = refreshDepartmentList;
 </script>
