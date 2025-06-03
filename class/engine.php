@@ -54,8 +54,8 @@ class engine extends dbobject
         $this->order   = $data['order'][0]['column'];
         $this->dirs    = $data['order'][0]['dir'];
         $this->column  = $data['columns'];
-        $start_date    = $data['start_date'];
-        $end_date      = $data['end_date'];
+        $start_date = isset($data['start_date']) ? $data['start_date'] : "";
+        $end_date = isset($data['end_date']) ? $data['end_date'] : "";
 		
 		$join          = $this->joinTables($join_arr);
 		$columner     = $columner;

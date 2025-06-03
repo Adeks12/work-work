@@ -6,10 +6,18 @@
             </h6>
         </div>
         <div class="card-body">
-            <a class="btn btn-warning mb-3" onclick="loadModal('setup/item_setup.php','modal_div')"
+            <a class="btn btn-warning mb-3" onclick="loadModal('setup/item_cat_setup.php','modal_div')"
                 href="javascript:void(0)" data-toggle="modal" data-target="#defaultModalPrimary">
                 <i class="fas fa-plus"></i> Create Item Category
             </a>
+
+            <div class="mb-3">
+                <label for="parentCatFilter" class="form-label">Filter by Main Category:</label>
+                <select id="parentCatFilter" class="form-select" style="width:auto; display:inline-block;">
+                    <option value="all">All Categories</option>
+                    <!-- Main categories will be loaded here by JS -->
+                </select>
+            </div>
 
             <div class="row">
                 <div class="col-12">
@@ -47,6 +55,33 @@
     var op = "item_cat.item_catList"; // Operation for DataTable
 
     $(document).ready(function () {
+        // Add debugging to check if jQuery is loaded
+        console.log('jQuery loaded:', typeof $ !== 'undefined');
+        console.log('Loading item categories...');
+
+        // Load main categories for dropdown
+        $.post('utilities.php', {
+            op: 'item_cat.getAllitem_cats',
+            only_main: 1
+        }, function (resp) {
+            console.log('Main categories response:', resp);
+            if (resp && resp.response_code == 0 && resp.data && Array.isArray(resp.data)) {
+                resp.data.forEach(function (cat) {
+                    $('#parentCatFilter').append(
+                        $('<option>', {
+                            value: cat.id,
+                            text: cat.item_cat_name
+                        })
+                    );
+                });
+            } else {
+                console.error('Failed to load main categories:', resp);
+            }
+        }, 'json').fail(function (xhr, status, error) {
+            console.error('Error loading main categories:', error, xhr.responseText);
+        });
+
+        // Initialize DataTable
         table = $("#datatables-item-cats").DataTable({
             "sDom": '<"top"i>rt<"bottom"flp><"clear">',
             processing: true,
@@ -70,36 +105,63 @@
                 data: function (d, l) {
                     d.op = op;
                     d.li = Math.random();
+                    d.parent_cat_id = $('#parentCatFilter').val();
+                    console.log('DataTable request data:', d);
+                    return d;
+                },
+                dataSrc: function (json) {
+                    console.log('DataTable response:', json);
+                    return json.data || [];
+                },
+                error: function (xhr, error, code) {
+                    console.error('DataTable AJAX Error:', error, code, xhr.responseText);
+                    alert('Error loading data: ' + error);
                 }
+            },
+            initComplete: function (settings, json) {
+                console.log('DataTable initialized:', json);
             }
+        });
+
+        // On dropdown change, reload table
+        $('#parentCatFilter').on('change', function () {
+            console.log('Filter changed to:', $(this).val());
+            table.ajax.reload();
         });
     });
 
     function edititem_cat(itemCatId) {
+        console.log('Editing item category:', itemCatId);
         loadModal('setup/item_cat_setup.php?op=edit&item_cat_id=' + itemCatId, 'modal_div');
         $('#defaultModalPrimary').modal('show');
     }
 
     function deleteitem_cat(itemCatId) {
+        console.log('Deleting item category:', itemCatId);
         if (confirm('Are you sure you want to delete this item category? This action cannot be undone.')) {
             $.post('utilities.php', {
                 op: 'item_cat.deleteitem_cat',
                 item_cat_id: itemCatId
             }, function (response) {
+                console.log('Delete response:', response);
                 if (response.response_code == 0) {
                     alert('Item category deleted successfully');
                     refreshItemCatList();
                 } else {
                     alert('Error: ' + response.response_message);
                 }
-            }, 'json').fail(function () {
+            }, 'json').fail(function (xhr, status, error) {
+                console.error('Delete error:', error, xhr.responseText);
                 alert('An error occurred while deleting the item category');
             });
         }
     }
 
     function refreshItemCatList() {
-        $('#datatables-item-cats').DataTable().ajax.reload();
+        console.log('Refreshing item category list...');
+        if (table) {
+            table.ajax.reload();
+        }
     }
 
     // Global function to refresh table after modal operations

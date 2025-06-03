@@ -1,1 +1,1 @@
-insert into item_category (merchant_id,item_cat_name,item_status,item_cat_description,created_at,created_officer,item_code) VALUES ('PRO-773289','Electronics','1','Electrically powered','2025-06-02 16:30:33','Jesuslovestestimony@gmail.com','MIN476')
+insert into inventory (merchant_id,item_cond,item_cat_id,item_color,allocation_status,usage_status,allocated_officer,created_at,created_officer,delete_status,item_code) VALUES ('PRO-773289','New','6','Green','Available','Maintenance','','2025-06-03 16:02:51','Jesuslovestestimony@gmail.com','0','ITM927327')

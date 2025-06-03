@@ -19,7 +19,7 @@ class Staff extends dbobject
                 'db' => 'staff_status', 
                 'dt' => 6,
                 'formatter' => function( $d, $row ) {
-                    return $d == '1' ? '<span class="badge bg-success">Still_employed</span>' : '<span class="badge bg-danger">No_longer_employed</span>';
+                    return $d == '1' ? '<span class="badge bg-success">Still employed</span>' : '<span class="badge bg-danger">No longer employed</span>';
                 }
             ),
             array( 'db' => 'created_at', 'dt' => 7 ),

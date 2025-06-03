@@ -39,6 +39,14 @@ else
     $operation = 'new';
     $item_cat = null;
 }
+
+// Fetch main categories for dropdown (excluding current category if editing)
+$main_cat_sql = "SELECT item_cat_id, item_cat_name FROM item_category WHERE merchant_id='$merchant_id' AND (parent_cat_id = 0 OR parent_cat_id IS NULL)";
+if ($operation == "edit" && !empty($item_cat_id)) {
+    $main_cat_sql .= " AND item_cat_id != '$item_cat_id'";
+}
+$main_cat_sql .= " ORDER BY item_cat_name";
+$main_categories = $dbobject->db_query($main_cat_sql, true);
 ?>
 
 <style>
@@ -102,7 +110,7 @@ else
                     <label class="form-label" style="display:block !important">Category Status<span
                             class="asterik">*</span></label>
                     <div class="input-group">
-                        <select class="form-select" name="item_status" id="item_status" required>
+                        <select class="form-select" name="item_status" id="item_status" required disabled>
                             <option value="">:: SELECT STATUS ::</option>
                             <option value="1"
                                 <?php echo ($operation == "edit" && $item_cat && isset($item_cat['item_status']) && $item_cat['item_status'] == '1') ? 'selected' : (($operation == "new") ? 'selected' : ''); ?>>
@@ -115,6 +123,25 @@ else
                     </div>
                 </div>
             </div>
+
+            <div class="col-sm-6">
+                <div class="form-group">
+                    <label class="form-label">Parent Category</label>
+                    <select name="parent_cat_id" id="parent_cat_id" class="form-select">
+                        <option value="0">-- No Parent (Main Category) --</option>
+                        <?php
+                        if (is_array($main_categories)) {
+                            foreach ($main_categories as $cat) {
+                                $selected = ($operation == "edit" && isset($item_cat['parent_cat_id']) && $item_cat['parent_cat_id'] == $cat['item_cat_id']) ? "selected" : "";
+                                echo "<option value=\"{$cat['item_cat_id']}\" $selected>{$cat['item_cat_name']}</option>";
+                            }
+                        }
+                        ?>
+                    </select>
+                    <small class="text-muted">Select a parent to make this a subcategory, or leave as main
+                        category.</small>
+                </div>
+            </div>
         </div>
 
         <div class="row">
@@ -125,6 +152,10 @@ else
                         placeholder="Enter category description (optional)"><?php echo ($operation == "edit" && $item_cat && isset($item_cat['item_cat_description'])) ? htmlspecialchars($item_cat['item_cat_description']) : ""; ?></textarea>
                 </div>
             </div>
+        </div>
+
+        <div class="row">
+            
         </div>
 
         <div class="row">
