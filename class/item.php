@@ -45,16 +45,17 @@ class item_cat extends dbobject
             ),
             array( 'db' => 'created_at', 'dt' => 4 ),
             // These must be included for formatter logic!
-            array( 'db' => 'merchant_id', 'dt' => 98 ),
-            array( 'db' => 'parent_cat_id', 'dt' => 99 ),
             array( 'db' => 'item_cat_id', 'dt' => 5,
-                'formatter' => function( $d, $row ) {
-                    return '<div class="d-flex gap-1">
-                                <button class="btn btn-sm btn-primary" onclick="edititem_cat('.$d.')">Edit</button>
-                                <button class="btn btn-sm btn-danger" onclick="deleteitem_cat('.$d.')">Delete</button>
-                            </div>';
-                }
-            )
+            'formatter' => function( $d, $row ) {
+            return '<div class="d-flex gap-1">
+                <button class="btn btn-sm btn-primary" onclick="edititem_cat('.$d.')">Edit</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteitem_cat('.$d.')">Delete</button>
+            </div>';
+            }
+        ),
+            array( 'db' => 'merchant_id', 'dt' => 98 ),
+            array( 'db' => 'parent_cat_id', 'dt' => 99 )
+           
         );
 
         // Filter by merchant_id for security

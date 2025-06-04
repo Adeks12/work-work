@@ -9,13 +9,14 @@ class inventory extends dbobject
         $GLOBALS['inventory_instance'] = $this;
 
         $table_name    = "inventory";
-        $primary_key   = "item_id";
+        $primary_key   = "inventory.item_id";
         $columner = array(
-            array( 'db' => 'item_id', 'dt' => 0 ),
-            array( 'db' => 'item_cond', 'dt' => 1 ),
-            array( 'db' => 'item_cat_name', 'dt' => 2 ),
-            array( 'db' => 'item_color', 'dt' => 3 ),
-            array( 'db' => 'allocation_status', 'dt' => 4,
+            array('db' => 'inventory.item_id', 'dt' => 0),
+            array('db' => 'inventory.item_code', 'dt' => 1),
+            array('db' => 'inventory.item_cond', 'dt' => 2),
+            array('db' => 'inventory.item_color', 'dt' => 3),
+            array('db' => 'ic.item_cat_name', 'dt' => 4),
+            array('db' => 'inventory.allocation_status', 'dt' => 5,
                 'formatter' => function($d, $row) {
                     $status_colors = [
                         'Available' => 'success',
@@ -26,7 +27,7 @@ class inventory extends dbobject
                     return '<span class="badge bg-' . $color . '">' . $d . '</span>';
                 }
             ),
-            array( 'db' => 'usage_status', 'dt' => 5,
+            array('db' => 'inventory.usage_status', 'dt' => 6,
                 'formatter' => function($d, $row) {
                     $status_colors = [
                         'Active' => 'success',
@@ -38,23 +39,23 @@ class inventory extends dbobject
                     return '<span class="badge bg-' . $color . '">' . $d . '</span>';
                 }
             ),
-            array( 'db' => 'allocated_officer', 'dt' => 6,
+            array('db' => "CONCAT(COALESCE(s.staff_first_name, ''), ' ', COALESCE(s.staff_last_name, ''))", 'dt' => 7,
                 'formatter' => function($d, $row) {
-                    return $d ? $d : '-';
+                    return trim($d) ? trim($d) : '-';
                 }
             ),
-            array( 'db' => 'allocated_date', 'dt' => 7,
+            array('db' => 'inventory.allocated_date', 'dt' => 8,
                 'formatter' => function($d, $row) {
                     return $d ? date('Y-m-d', strtotime($d)) : '-';
                 }
             ),
-            array( 'db' => 'created_at', 'dt' => 8,
+            array('db' => 'inventory.created_at', 'dt' => 9,
                 'formatter' => function($d, $row) {
                     return date('Y-m-d H:i', strtotime($d));
                 }
             ),
-            array( 'db' => 'item_id', 'dt' => 9,
-                'formatter' => function( $d, $row ) {
+            array('db' => 'inventory.item_id', 'dt' => 10,
+                'formatter' => function($d, $row) {
                     return '<div class="d-flex gap-1">
                                 <button class="btn btn-sm btn-primary" onclick="editInventory('.$d.')">Edit</button>
                                 <button class="btn btn-sm btn-danger" onclick="deleteInventory('.$d.')">Delete</button>
@@ -63,14 +64,15 @@ class inventory extends dbobject
             )
         );
 
-        // Filter by merchant_id for security
-        $merchant_id = $_SESSION['merchant_id'] ?? $data['merchant_id'] ?? '';
-        
-        // JOIN with item_category to get category name
+        // JOIN with item_category to get category name and staff for officer name
         $join = [
-            ["item_category ic" => ["inventory.item_cat_id", "ic.item_cat_id"]]
+            ["item_category ic" => ["inventory.item_cat_id", "ic.item_cat_id"]],
+            ["staff s" => ["inventory.allocated_officer", "s.staff_id"]]
         ];
-        $filter = "inventory.merchant_id = '$merchant_id' AND inventory.delete_status != '1'";
+
+        // Build filter string, always start with AND
+        $merchant_id = $_SESSION['merchant_id'] ?? $data['merchant_id'] ?? '';
+        $filter = " AND inventory.merchant_id = '$merchant_id' AND inventory.delete_status != '1'";
 
         // Add category filter if set
         if (isset($data['item_cat_id']) && $data['item_cat_id'] !== '' && $data['item_cat_id'] !== 'all') {
@@ -79,13 +81,13 @@ class inventory extends dbobject
         }
 
         // Add allocation status filter if set
-        if (isset($data['allocation_status']) && $data['allocation_status'] !== '' && $data['allocation_status'] !== 'all') {
-            $allocation_status = $data['allocation_status'];
-            $filter .= " AND inventory.allocation_status = '$allocation_status'";
-        }
+        // if (isset($data['allocation_status']) && $data['allocation_status'] !== '' && $data['allocation_status'] !== 'all') {
+            
+        //     $filter .= " AND inventory.allocation_status = '$allocation_status'";
+        // }
 
         $datatableEngine = new engine();
-        return $datatableEngine->generic_multi_table($data, $table_name, $columner, $primary_key, $join, $filter);
+        return $datatableEngine->generic_multi_table($data, $table_name, $columner, $primary_key, $join, $filter, $join_type = 'LEFT JOIN');
     }
 
     private function generateItemCode($merchantId) {
@@ -101,8 +103,14 @@ class inventory extends dbobject
     public function createInventory($data)
     {
         try {
+            // Validate merchant_id is present
+            if (empty($data['merchant_id'])) {
+                return json_encode(array("response_code" => 20, "response_message" => "Merchant ID is required"));
+            }
+
+            // Add timestamps and audit fields
             $data['created_at'] = date("Y-m-d H:i:s");
-            $data['created_officer'] = $_SESSION['username_sess'];
+            $data['created_officer'] = $_SESSION['username_sess'] ?? 'system';
             $data['delete_status'] = '0'; // Not deleted
 
             // Auto-generate item code for new items
@@ -113,7 +121,7 @@ class inventory extends dbobject
             // Set allocation date and by if item is being allocated
             if($data['allocation_status'] == 'Allocated' && $data['operation'] == 'new') {
                 $data['allocated_date'] = date("Y-m-d H:i:s");
-                $data['allocated_by'] = $_SESSION['username_sess'];
+                $data['allocated_by'] = $_SESSION['username_sess'] ?? 'system';
             }
 
             // Validation rules
@@ -144,7 +152,7 @@ class inventory extends dbobject
                     $excluded_keys = ['op', 'operation', 'nrfa-csrf-token-label'];
                     $res = $this->doInsert('inventory', $data, $excluded_keys);
 
-                    if($res == "1")
+                    if($res == "1" || $res === true)
                     {
                         return json_encode(array(
                             "response_code" => 0,
@@ -153,20 +161,27 @@ class inventory extends dbobject
                     }
                     else
                     {
+                        error_log("Insert failed with result: " . print_r($res, true));
                         return json_encode(array("response_code" => 78, "response_message" => "Failed to create inventory item"));
                     }
                 }
                 elseif($data['operation'] == 'edit')
                 {
-                    // Set allocation date and by if status changed to allocated
+                    // Check if item exists and belongs to merchant
                     $current_item = $this->db_query("SELECT allocation_status FROM inventory WHERE item_id = '{$data['item_id']}' AND merchant_id = '{$data['merchant_id']}'", true);
-                    if($current_item && $current_item[0]['allocation_status'] != 'Allocated' && $data['allocation_status'] == 'Allocated') {
+                    
+                    if (!$current_item || empty($current_item)) {
+                        return json_encode(array("response_code" => 404, "response_message" => "Inventory item not found"));
+                    }
+
+                    // Set allocation date and by if status changed to allocated
+                    if($current_item[0]['allocation_status'] != 'Allocated' && $data['allocation_status'] == 'Allocated') {
                         $data['allocated_date'] = date("Y-m-d H:i:s");
-                        $data['allocated_by'] = $_SESSION['username_sess'];
+                        $data['allocated_by'] = $_SESSION['username_sess'] ?? 'system';
                     }
 
                     $data['updated_at'] = date("Y-m-d H:i:s");
-                    $data['updated_officer'] = $_SESSION['username_sess'];
+                    $data['updated_officer'] = $_SESSION['username_sess'] ?? 'system';
                     $merchant_id = $data['merchant_id'];
                     $item_id = $data['item_id'];
                    
@@ -179,8 +194,13 @@ class inventory extends dbobject
                     }
                     else
                     {
+                        error_log("Update failed with result: " . print_r($res, true));
                         return json_encode(array("response_code" => 79, "response_message" => "Failed to update inventory item"));
                     }
+                }
+                else
+                {
+                    return json_encode(array("response_code" => 20, "response_message" => "Invalid operation"));
                 }
             }
             else
@@ -191,7 +211,7 @@ class inventory extends dbobject
         catch(Exception $e)
         {
             error_log("Inventory Creation Error: " . $e->getMessage());
-            return json_encode(array("response_code" => 500, "response_message" => $e->getMessage()));
+            return json_encode(array("response_code" => 500, "response_message" => "An error occurred: " . $e->getMessage()));
         }
     }
     
@@ -244,68 +264,4 @@ class inventory extends dbobject
             return json_encode(array("response_code" => 500, "response_message" => $e->getMessage()));
         }
     }
-    
-    public function getAllInventory($data)
-    {
-        try {
-            $merchant_id = $_SESSION['merchant_id'] ?? $data['merchant_id'];
-            $where = "i.merchant_id = '$merchant_id' AND i.delete_status != '1'";
-            
-            if(isset($data['allocation_status']) && $data['allocation_status']) {
-                $where .= " AND i.allocation_status = '{$data['allocation_status']}'";
-            }
-            
-            if(isset($data['usage_status']) && $data['usage_status']) {
-                $where .= " AND i.usage_status = '{$data['usage_status']}'";
-            }
-
-            $sql = "SELECT i.item_id as id, i.item_code, i.item_cond, i.item_color, 
-                           i.allocation_status, i.usage_status, ic.item_cat_name
-                    FROM inventory i 
-                    LEFT JOIN item_category ic ON i.item_cat_id = ic.item_cat_id 
-                    WHERE $where 
-                    ORDER BY i.created_at DESC";
-            
-            $result = $this->db_query($sql, true);
-
-            return json_encode(array("response_code" => 0, "data" => $result));
-        }
-        catch(Exception $e)
-        {
-            error_log("Get All Inventory Error: " . $e->getMessage());
-            return json_encode(array("response_code" => 500, "response_message" => "An error occurred while fetching inventory items"));
-        }
     }
-
-    public function getInventoryStats($data)
-    {
-        try {
-            $merchant_id = $_SESSION['merchant_id'] ?? $data['merchant_id'];
-            
-            $stats = array();
-            
-            // Total items
-            $total = $this->db_query("SELECT COUNT(*) as count FROM inventory WHERE merchant_id = '$merchant_id' AND delete_status != '1'", true);
-            $stats['total'] = $total[0]['count'];
-            
-            // Available items
-            $available = $this->db_query("SELECT COUNT(*) as count FROM inventory WHERE merchant_id = '$merchant_id' AND allocation_status = 'Available' AND delete_status != '1'", true);
-            $stats['available'] = $available[0]['count'];
-            
-            // Allocated items
-            $allocated = $this->db_query("SELECT COUNT(*) as count FROM inventory WHERE merchant_id = '$merchant_id' AND allocation_status = 'Allocated' AND delete_status != '1'", true);
-            $stats['allocated'] = $allocated[0]['count'];
-            
-            // Active items
-            $active = $this->db_query("SELECT COUNT(*) as count FROM inventory WHERE merchant_id = '$merchant_id' AND usage_status = 'Active' AND delete_status != '1'", true);
-            $stats['active'] = $active[0]['count'];
-
-            return json_encode(array("response_code" => 0, "data" => $stats));
-        }
-        catch(Exception $e)
-        {
-            error_log("Get Inventory Stats Error: " . $e->getMessage());
-            return json_encode(array("response_code" => 500, "response_message" => "An error occurred while fetching inventory stats"));
-        }
-    }
-}

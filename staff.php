@@ -18,23 +18,26 @@
                             <h6 class="card-subtitle text-muted">Manage your organization's staff</h6>
                         </div>
                         <div class="card-body">
-                            <table id="datatables-staffs" class="table table-striped w-100">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>First Name</th>
-                                        <th>Last Name</th>
-                                        <th>Staff Code</th>
-                                        <th>Email</th>
-                                        <th>Phone Number</th>
-                                        <th>Status</th>
-                                        <th>Created Date</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                </tbody>
-                            </table>
+                            <div class="table-responsive">
+                                <table id="datatables-staffs" class="table table-striped w-100">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>First Name</th>
+                                            <th>Last Name</th>
+                                            <th>Staff Code</th>
+                                            <th>Email</th>
+                                            <th>Phone Number</th>
+                                            <th>Department</th>
+                                            <th>Status</th>
+                                            <th>Created Date</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>

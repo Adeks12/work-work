@@ -1,1 +1,3 @@
-SELECT item_id,item_cond,item_cat_name,item_color,allocation_status,usage_status,allocated_officer,allocated_date,created_at,item_id FROM inventory  JOIN item_category ic ON inventory.item_cat_id=ic.item_cat_id WHERE  1 = 1 inventory.merchant_id = 'PRO-773289' AND inventory.delete_status != '1' AND inventory.item_cat_id = '6' order by item_id asc  LIMIT 0, 10
+SELECT inventory.item_id,inventory.item_code,inventory.item_cond,inventory.item_color,ic.item_cat_name,inventory.allocation_status,inventory.usage_status,staff.staff_first_name,inventory.allocated_date,inventory.created_at,inventory.item_id FROM inventory LEFT JOIN item_category ic ON inventory.item_cat_id=ic.item_cat_id JOIN staff s ON inventory.allocated_officer=s.staff_id WHERE
+	 1 = 1  AND inventory.merchant_id = 'PRO-773289' AND inventory.delete_status != '1' ORDER BY inventory.item_id
+	asc LIMIT 0, 10

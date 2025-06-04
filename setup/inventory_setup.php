@@ -1,11 +1,32 @@
 <?php
+// Start session if not already started
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
 include_once("../libs/dbfunctions.php");
 $dbobject = new dbobject();
 
+// Check if user is logged in
+if (!isset($_SESSION['username_sess'])) {
+    echo "<script>alert('Please login first'); window.location.href='login.php';</script>";
+    exit;
+}
+
 $user = $_SESSION['username_sess'];
-$sql = ("SELECT merchant_id FROM userdata WHERE username = '$user' LIMIT 1");
-$doquery= $dbobject->db_query($sql, true);
+$sql = "SELECT merchant_id FROM userdata WHERE username = '$user' LIMIT 1";
+$doquery = $dbobject->db_query($sql, true);
+
+if (!$doquery || empty($doquery)) {
+    echo "<script>alert('User not found'); window.location.href='login.php';</script>";
+    exit;
+}
+
 $merchant_id = $doquery[0]['merchant_id'];
+
+// Fix: Use correct variable name for staff query
+$sql1 = "SELECT staff_id, staff_first_name, staff_last_name FROM staff WHERE merchant_id = '$merchant_id' AND staff_status = '1'";
+$staffs = $dbobject->db_query($sql1, true); // Fixed: was using $sql instead of $sql1
 
 if(isset($_REQUEST['op']) && $_REQUEST['op'] == 'edit')
 {
@@ -171,11 +192,19 @@ $categories = $dbobject->db_query($categories_sql, true);
             </div>
             <div class="col-sm-6" id="allocation_fields" style="display: none;">
                 <div class="form-group">
-                    <label class="form-label">Allocated Officer</label>
-                    <input type="text" name="allocated_officer" id="allocated_officer" class="form-control"
-                        value="<?php echo ($operation == "edit" && $item && isset($item['allocated_officer'])) ? htmlspecialchars($item['allocated_officer']) : ""; ?>"
-                        placeholder="Enter allocated officer" autocomplete="off">
-                    <div class="invalid-feedback">Please enter the allocated officer.</div>
+                    <label for="allocated_officer" class="form-label">Allocated Officer</label>
+                    <select name="allocated_officer" id="allocated_officer" class="form-select">
+                        <option value="">-- Select Officer --</option>
+                        <?php
+                        if(is_array($staffs)) {
+                            foreach($staffs as $staff) {
+                                // Fix: Use correct variable name
+                                $selected = ($operation == "edit" && $item && isset($item['allocated_officer']) && $item['allocated_officer'] == $staff['staff_id']) ? "selected" : "";
+                                echo "<option value=\"{$staff['staff_id']}\" $selected>{$staff['staff_first_name']} {$staff['staff_last_name']}</option>";
+                            }
+                        }
+                        ?>
+                    </select>
                 </div>
             </div>
         </div>
@@ -208,10 +237,12 @@ $categories = $dbobject->db_query($categories_sql, true);
             </div>
         </div>
 
-        <?php include("form-footer.php"); ?>
-        <button type="button" id="save_inventory" class="btn btn-primary" onclick="saveRecord()">
-            <?php echo ($operation == "edit") ? "Update Item" : "Create Item"; ?>
-        </button>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" id="save_inventory" class="btn btn-primary" onclick="saveRecord()">
+                <?php echo ($operation == "edit") ? "Update Item" : "Create Item"; ?>
+            </button>
+        </div>
     </form>
 </div>
 
@@ -268,7 +299,7 @@ $categories = $dbobject->db_query($categories_sql, true);
         var firstInvalidField = null;
 
         $('#form1 [required]').each(function () {
-            if (!$(this).val().trim()) {
+            if (!$(this).val() || !$(this).val().trim()) {
                 $(this).addClass('is-invalid');
                 if (!firstInvalidField) {
                     firstInvalidField = $(this);
@@ -291,42 +322,54 @@ $categories = $dbobject->db_query($categories_sql, true);
         $("#save_inventory").prop('disabled', true);
 
         var dd = $("#form1").serialize();
+        console.log('Form data being sent:', dd);
 
-        $.post("utilities.php", dd, function (re) {
-            console.log(re);
-            $("#save_inventory").html("<?php echo ($operation == 'edit') ? 'Update Item' : 'Create Item'; ?>");
-            $("#save_inventory").prop('disabled', false);
+        $.ajax({
+            url: "utilities.php",
+            type: "POST",
+            data: dd,
+            dataType: 'json',
+            success: function (re) {
+                console.log('Response received:', re);
+                $("#save_inventory").html(
+                    "<?php echo ($operation == 'edit') ? 'Update Item' : 'Create Item'; ?>");
+                $("#save_inventory").prop('disabled', false);
 
-            if (re.response_code == 0) {
-                showMessage(re.response_message, "success");
+                if (re.response_code == 0) {
+                    showMessage(re.response_message, "success");
 
-                // Refresh the table after successful operation
-                if (typeof refreshInventoryList === 'function') {
-                    refreshInventoryList();
-                } else if (typeof getpage === 'function') {
-                    getpage('inventory_list.php', 'page');
+                    // Refresh the table after successful operation
+                    if (typeof refreshInventoryList === 'function') {
+                        refreshInventoryList();
+                    } else if (typeof getpage === 'function') {
+                        getpage('inventory_list.php', 'page');
+                    }
+
+                    // Clear form for new entries
+                    if ("<?php echo $operation; ?>" === "new") {
+                        $("#form1")[0].reset();
+                        $("#allocation_status").val('Available');
+                        $("#usage_status").val('Active');
+                        toggleAllocationFields();
+                    }
+
+                    setTimeout(function () {
+                        $('#defaultModalPrimary').modal('hide');
+                    }, 1500);
+
+                } else {
+                    showMessage(re.response_message, "error");
                 }
-
-                // Clear form for new entries
-                if ("<?php echo $operation; ?>" === "new") {
-                    $("#form1")[0].reset();
-                    $("#allocation_status").val('Available');
-                    $("#usage_status").val('Active');
-                    toggleAllocationFields();
-                }
-
-                setTimeout(function () {
-                    $('#defaultModalPrimary').modal('hide');
-                }, 1500);
-
-            } else {
-                showMessage(re.response_message, "error");
+            },
+            error: function (xhr, status, error) {
+                console.log("Ajax Error:", xhr.responseText);
+                console.log("Status:", status);
+                console.log("Error:", error);
+                $("#save_inventory").html(
+                    "<?php echo ($operation == 'edit') ? 'Update Item' : 'Create Item'; ?>");
+                $("#save_inventory").prop('disabled', false);
+                showMessage("An error occurred while processing your request. Please try again.", "error");
             }
-        }, 'json').fail(function (xhr, status, error) {
-            console.log("Ajax Error:", xhr.responseText);
-            $("#save_inventory").html("<?php echo ($operation == 'edit') ? 'Update Item' : 'Create Item'; ?>");
-            $("#save_inventory").prop('disabled', false);
-            showMessage("An error occurred while processing your request. Please try again.", "error");
         });
     }
 </script>

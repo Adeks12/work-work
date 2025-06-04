@@ -7,6 +7,7 @@ class Staff extends dbobject
     public function staffList($data)
     {
         $table_name    = "staff";
+        $table_name = "staff";
         $primary_key   = "staff_id";
         $columner = array(
             array( 'db' => 'staff_id', 'dt' => 0 ),
@@ -15,17 +16,18 @@ class Staff extends dbobject
             array( 'db' => 'staff_code', 'dt' => 3 ),
             array( 'db' => 'staff_email', 'dt' => 4 ),
             array( 'db' => 'staff_phone_no', 'dt' => 5 ),
+            array( 'db' => 'depmt_name', 'dt' => 6 ), // Add this line (adjust dt as needed)
             array( 
                 'db' => 'staff_status', 
-                'dt' => 6,
+                'dt' => 7,
                 'formatter' => function( $d, $row ) {
                     return $d == '1' ? '<span class="badge bg-success">Still employed</span>' : '<span class="badge bg-danger">No longer employed</span>';
                 }
             ),
-            array( 'db' => 'created_at', 'dt' => 7 ),
+            array( 'db' => 'staff.created_at', 'dt' => 8 ),
             array( 
                 'db' => 'staff_id', 
-                'dt' => 8,
+                'dt' => 9,
                 'formatter' => function( $d, $row ) {
                     return '<div class="d-flex gap-1">
                                 <button class="btn btn-sm btn-primary" onclick="editstaff('.$d.')">Edit</button>
@@ -34,13 +36,19 @@ class Staff extends dbobject
                 }
             )
         );
+        $table_name = "staff";
+        $join = [
+        ["department d" => ["staff.depmt_id", "d.depmt_id"]]
+        ];
         
         // Filter by merchant_id for security
         $merchant_id = $_SESSION['merchant_id'] ?? $data['merchant_id'] ?? '';
-        $filter = " AND merchant_id = '$merchant_id'";
+        $filter = "AND staff.merchant_id = '$merchant_id'";
 
         $datatableEngine = new engine();
-        echo $datatableEngine->generic_table($data, $table_name, $columner, $primary_key, $filter);
+        return $datatableEngine->generic_multi_table($data, $table_name, $columner, $primary_key, $join, $filter,
+        $join_type = 'LEFT JOIN');
+        
     }
 
     private function generateStaffCode($staffFirstName, $merchantId) {
@@ -80,16 +88,18 @@ class Staff extends dbobject
                     'staff_last_name' => 'required',
                     'staff_email' => 'required',
                     'staff_phone_no' => 'required',
-                    'staff_status' => 'required'
+                    'staff_status' => 'required',
+                    'depmt_id' => 'required' 
                 ),
                 array(
                     'staff_first_name' => 'First Name',
                     'staff_last_name' => 'Last Name',
                     'staff_email' => 'Email',
                     'staff_phone_no' => 'Phone Number',
-                    'staff_status' => 'Status'
+                    'staff_status' => 'Status',
+                    'depmt_id' => 'Department' 
                 )
-            );
+            ); // <-- Add this line
 
             if(!$validation['error'])
             {

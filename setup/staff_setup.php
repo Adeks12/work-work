@@ -2,10 +2,14 @@
 include_once("../libs/dbfunctions.php");
 $dbobject = new dbobject();
 
+
 $user = $_SESSION['username_sess'];
 $sql = ("SELECT merchant_id FROM userdata WHERE username = '$user' LIMIT 1");
 $doquery= $dbobject->db_query($sql, true);
 $merchant_id = $doquery[0]['merchant_id'];
+$sql1 = ("SELECT depmt_id, depmt_name FROM department WHERE merchant_id = '$merchant_id' ORDER BY
+depmt_name");
+$departments = $dbobject->db_query($sql1, true);
 
 if(isset($_REQUEST['op']) && $_REQUEST['op'] == 'edit')
 {
@@ -122,6 +126,23 @@ else
                     <div class="invalid-feedback">Please enter the staff address.</div>
                 </div>
             </div>
+            <div class="col-sm-6">
+                <div class="form-group">
+                    <label class="form-label">Department<span class="asterik">*</span></label>
+                    <select name="depmt_id" id="depmt_id" class="form-select" required>
+                        <option value="">:: SELECT DEPARTMENT ::</option>
+                        <?php
+                        if (is_array($departments)) {
+                            foreach ($departments as $dept) {
+                                $selected = ($operation == "edit" && $staff && isset($staff['depmt_id']) && $staff['depmt_id'] == $dept['depmt_id']) ? "selected" : "";
+                                echo "<option value=\"{$dept['depmt_id']}\" $selected>{$dept['depmt_name']}</option>";
+                            }
+                        }
+                        ?>
+                    </select>
+                    <div class="invalid-feedback">Please select a department.</div>
+                </div>
+            </div>
         </div>
 
         <?php if($operation == "edit"): ?>
@@ -179,6 +200,10 @@ else
             </div>
         </div>
         <?php endif; ?>
+
+        <div class="row">
+            
+        </div>
 
         <div class="row">
             <div class="col-sm-12">
