@@ -227,6 +227,48 @@ class engine extends dbobject
         return $columns == ""?" 1 = 1 ":"(".$columns.") AND 1 = 1 ";
 //        return $columns == ""?" 1 = 1 ":$columns." AND 1 = 1 ";
     }
+
+	public function generic_select_report_table($data, $select, $filter_with_table, $columner,$pk,$filter = "", $groupby_db = "")
+    {
+		
+     	$this->draw    = isset( $data['draw']) ?   $data['draw']  : "";
+        $this->start   =  isset($data['start']) ?  $data['start']  : "";
+        $this->length  =  isset($data['length']) ?  $data['length']  : "";
+        $this->search  = isset( $data['search']['value']) ? $data['search']['value']   : "";
+        $this->order   =  isset($data['order'][0]['column']) ? $data['order'][0]['column']   : "";
+
+        //SORT IN DESCENDING ORDER ON FIRST DRAW
+        if($this->draw == 1) {
+	        $this->dirs    = "desc";
+	    }
+	    else {
+	        $this->dirs    = isset( $data['order'][0]['dir']) ?  $data['order'][0]['dir']  : "";
+	    }
+        $this->column  =  isset( $data['columns'] ) ? $data['columns']  : "";
+        $start_date    =  isset($data['start_date']) ? $data['start_date']   : "";
+        $end_date      =  isset($data['end_date']) ?  $data['end_date']  : "";
+        $order_db            = isset($columner[$this->order]['db']) ? $columner[$this->order]['db'] : "";
+		
+		$columner     = $columner;
+        $fields       = $this->prepare_column($columner);
+		
+        $sql = "SELECT $select FROM $filter_with_table  AND ".$this->prepareSearch($columner,$this->search). " " .$groupby_db ." order by ".$order_db." ".$this->dirs."  LIMIT ".$this->start.", ".$this->length;
+		
+		$result   = $this->db_query($sql);
+		
+		$sql_without_limit = "SELECT $pk FROM $filter_with_table AND ".$this->prepareSearch($columner,$this->search). " " .$groupby_db . " order by ".$order_db." ".$this->dirs;
+ 		
+ 		//logger
+ 		file_put_contents("logger/datatable_debug.php", "SQL:  $sql ::||:: WITHOUT LIMIT: $sql_without_limit" );
+ 		//
+		//file_put_contents("logger/datatable_debug.php", json_encode($data) );
+
+		$output = $this->display_data($result,$columner,$sql_without_limit,$pk,$this->start);
+        
+        return json_encode($output);
+    }
+
+    
     
     
     

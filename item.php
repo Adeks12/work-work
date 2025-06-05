@@ -27,6 +27,15 @@
                             <h6 class="card-subtitle text-muted">Manage your organization's item categories</h6>
                         </div>
                         <div class="card-body">
+                            <!-- Controls Row: Search & Pagination above table -->
+                            <div class="row mb-3 align-items-center">
+                                <div class="col-md-6">
+                                    <div id="itemCatsTable_filter" class="dataTables_filter"></div>
+                                </div>
+                                <div class="col-md-6 text-end">
+                                    <div id="itemCatsTable_length" class="dataTables_length"></div>
+                                </div>
+                            </div>
                             <table id="datatables-item-cats" class="table table-striped w-100">
                                 <thead>
                                     <tr>
@@ -41,6 +50,12 @@
                                 <tbody>
                                 </tbody>
                             </table>
+                            <!-- Pagination below table, but you can move it if you want -->
+                            <div class="row mt-2">
+                                <div class="col-12">
+                                    <div id="itemCatsTable_paginate" class="dataTables_paginate"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -81,18 +96,13 @@
             console.error('Error loading main categories:', error, xhr.responseText);
         });
 
-        // Initialize DataTable
+        // Initialize DataTable with dom option for controls above table
         table = $("#datatables-item-cats").DataTable({
-            "sDom": '<"top"i>rt<"bottom"flp><"clear">',
+            dom: '<"row mb-3 align-items-center"<"col-md-6"f><"col-md-6 text-end"l>>rt<"row mt-2"<"col-12"p>>',
             processing: true,
-            columnDefs: [{
-                    orderable: false,
-                    targets: 0
-                },
-                {
-                    width: "100px",
-                    targets: 3
-                }
+            columnDefs: [
+                { orderable: false, targets: 0 },
+                { width: "100px", targets: 3 }
             ],
             serverSide: true,
             paging: true,
@@ -106,20 +116,11 @@
                     d.op = op;
                     d.li = Math.random();
                     d.parent_cat_id = $('#parentCatFilter').val();
-                    console.log('DataTable request data:', d);
                     return d;
                 },
                 dataSrc: function (json) {
-                    console.log('DataTable response:', json);
                     return json.data || [];
-                },
-                error: function (xhr, error, code) {
-                    console.error('DataTable AJAX Error:', error, code, xhr.responseText);
-                    alert('Error loading data: ' + error);
                 }
-            },
-            initComplete: function (settings, json) {
-                console.log('DataTable initialized:', json);
             }
         });
 

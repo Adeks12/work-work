@@ -19,21 +19,7 @@
                             <h6 class="card-subtitle text-muted">Manage your organization's departments</h6>
                         </div>
                         <div class="card-body">
-                            <!-- Search Box -->
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <div class="input-group">
-                                        <input type="text" id="searchInput" class="form-control"
-                                            placeholder="Search departments...">
-                                        <button class="btn btn-outline-secondary" type="button" id="searchBtn">
-                                            <i class="fas fa-search"></i>
-                                        </button>
-                                        <button class="btn btn-outline-secondary" type="button" id="clearBtn">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
+                           
 
                             <table id="datatables-departments" class="table table-striped w-100">
                                 <thead>
@@ -65,7 +51,7 @@
 
     $(document).ready(function () {
         table = $("#datatables-departments").DataTable({
-            "sDom": '<"top"i>rt<"bottom"flp><"clear">',
+            dom: '<"row mb-3 align-items-center"<"col-md-6"f><"col-md-6 text-end"l>>rt<"row mt-2"<"col-12"p>>',
             processing: true,
             columnDefs: [{
                     orderable: false,

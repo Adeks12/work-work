@@ -6,88 +6,73 @@ class inventory extends dbobject
 {
     public function inventoryList($data)
     {
-        $GLOBALS['inventory_instance'] = $this;
-
-        $table_name    = "inventory";
-        $primary_key   = "inventory.item_id";
+        $primary_key = "i.item_id";
         $columner = array(
-            array('db' => 'inventory.item_id', 'dt' => 0),
-            array('db' => 'inventory.item_code', 'dt' => 1),
-            array('db' => 'inventory.item_cond', 'dt' => 2),
-            array('db' => 'inventory.item_color', 'dt' => 3),
+            array('db' => 'i.item_id', 'dt' => 0),
+            array('db' => 'i.item_code', 'dt' => 1),
+            array('db' => 'i.item_cond', 'dt' => 2),
+            array('db' => 'i.item_color', 'dt' => 3),
             array('db' => 'ic.item_cat_name', 'dt' => 4),
-            array('db' => 'inventory.allocation_status', 'dt' => 5,
-                'formatter' => function($d, $row) {
-                    $status_colors = [
-                        'Available' => 'success',
-                        'Allocated' => 'primary',
-                        'Reserved' => 'warning'
-                    ];
-                    $color = $status_colors[$d] ?? 'secondary';
-                    return '<span class="badge bg-' . $color . '">' . $d . '</span>';
-                }
-            ),
-            array('db' => 'inventory.usage_status', 'dt' => 6,
-                'formatter' => function($d, $row) {
-                    $status_colors = [
-                        'Active' => 'success',
-                        'Inactive' => 'secondary',
-                        'Maintenance' => 'warning',
-                        'Retired' => 'danger'
-                    ];
-                    $color = $status_colors[$d] ?? 'secondary';
-                    return '<span class="badge bg-' . $color . '">' . $d . '</span>';
-                }
-            ),
-            array('db' => "CONCAT(COALESCE(s.staff_first_name, ''), ' ', COALESCE(s.staff_last_name, ''))", 'dt' => 7,
-                'formatter' => function($d, $row) {
-                    return trim($d) ? trim($d) : '-';
-                }
-            ),
-            array('db' => 'inventory.allocated_date', 'dt' => 8,
-                'formatter' => function($d, $row) {
-                    return $d ? date('Y-m-d', strtotime($d)) : '-';
-                }
-            ),
-            array('db' => 'inventory.created_at', 'dt' => 9,
-                'formatter' => function($d, $row) {
-                    return date('Y-m-d H:i', strtotime($d));
-                }
-            ),
-            array('db' => 'inventory.item_id', 'dt' => 10,
-                'formatter' => function($d, $row) {
-                    return '<div class="d-flex gap-1">
-                                <button class="btn btn-sm btn-primary" onclick="editInventory('.$d.')">Edit</button>
-                                <button class="btn btn-sm btn-danger" onclick="deleteInventory('.$d.')">Delete</button>
-                            </div>';
-                }
-            )
+            array('db' => 'i.allocation_status', 'dt' => 5, 'formatter' => function($d, $row) {
+                $status_colors = [
+                    'Available' => 'success',
+                    'Allocated' => 'primary',
+                    'Reserved' => 'warning'
+                ];
+                $color = $status_colors[$d] ?? 'secondary';
+                return '<span class="badge bg-' . $color . '">' . $d . '</span>';
+            }),
+            array('db' => 'i.usage_status', 'dt' => 6, 'formatter' => function($d, $row) {
+                $status_colors = [
+                    'Active' => 'success',
+                    'Inactive' => 'secondary',
+                    'Maintenance' => 'warning',
+                    'Retired' => 'danger'
+                ];
+                $color = $status_colors[$d] ?? 'secondary';
+                return '<span class="badge bg-' . $color . '">' . $d . '</span>';
+            }),
+            // Use the alias 'officer_name' for the concatenated staff name
+            array('db' => 'officer_name', 'dt' => 7, 'formatter' => function($d, $row) {
+                return (isset($d) && trim((string)$d)) ? trim($d) : '-';
+            }),
+            array('db' => 'i.allocated_date', 'dt' => 8, 'formatter' => function($d, $row) {
+                return $d ? date('Y-m-d', strtotime($d)) : '-';
+            }),
+            array('db' => 'i.created_at', 'dt' => 9, 'formatter' => function($d, $row) {
+                return date('Y-m-d H:i', strtotime($d));
+            }),
+            array('db' => 'i.item_id', 'dt' => 10, 'formatter' => function($d, $row) {
+                return '<div class="d-flex gap-1">
+                            <button class="btn btn-sm btn-primary" onclick="editInventory('.$d.')">Edit</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteInventory('.$d.')">Delete</button>
+                        </div>';
+            })
         );
 
-        // JOIN with item_category to get category name and staff for officer name
-        $join = [
-            ["item_category ic" => ["inventory.item_cat_id", "ic.item_cat_id"]],
-            ["staff s" => ["inventory.allocated_officer", "s.staff_id"]]
-        ];
-
-        // Build filter string, always start with AND
         $merchant_id = $_SESSION['merchant_id'] ?? $data['merchant_id'] ?? '';
-        $filter = " AND inventory.merchant_id = '$merchant_id' AND inventory.delete_status != '1'";
+        $filter = " AND i.merchant_id = '$merchant_id' AND i.delete_status != '1'";
 
-        // Add category filter if set
         if (isset($data['item_cat_id']) && $data['item_cat_id'] !== '' && $data['item_cat_id'] !== 'all') {
             $cat_id = intval($data['item_cat_id']);
-            $filter .= " AND inventory.item_cat_id = '$cat_id'";
+            $filter .= " AND i.item_cat_id = '$cat_id'";
         }
 
-        // Add allocation status filter if set
-        // if (isset($data['allocation_status']) && $data['allocation_status'] !== '' && $data['allocation_status'] !== 'all') {
-            
-        //     $filter .= " AND inventory.allocation_status = '$allocation_status'";
-        // }
+        // Use alias officer_name for the concatenated staff name
+        $select = "i.item_id, i.item_code, i.item_cond, i.item_color, ic.item_cat_name, i.allocation_status, i.usage_status, CONCAT(COALESCE(s.staff_first_name, ''), ' ', COALESCE(s.staff_last_name, '')) as officer_name, i.allocated_date, i.created_at";
+        $from = "inventory i LEFT JOIN item_category ic ON i.item_cat_id = ic.item_cat_id LEFT JOIN staff s ON i.allocated_officer = s.staff_id WHERE 1=1 $filter";
 
-        $datatableEngine = new engine();
-        return $datatableEngine->generic_multi_table($data, $table_name, $columner, $primary_key, $join, $filter, $join_type = 'LEFT JOIN');
+        $group_by = "";
+
+        $engine = new engine();
+        return $engine->generic_select_report_table(
+            $data,
+            $select,
+            $from,
+            $columner,
+            $primary_key,
+            $group_by
+        );
     }
 
     private function generateItemCode($merchantId) {

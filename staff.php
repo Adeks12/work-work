@@ -53,7 +53,7 @@
 
     $(document).ready(function () {
         table = $("#datatables-staffs").DataTable({
-            "sDom": '<"top"i>rt<"bottom"flp><"clear">',
+            dom: '<"row mb-3 align-items-center"<"col-md-6"f><"col-md-6 text-end"l>>rt<"row mt-2"<"col-12"p>>',
             processing: true,
             columnDefs: [{
                     orderable: false,
