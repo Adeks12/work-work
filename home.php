@@ -1,6 +1,7 @@
 <?php
 require_once('libs/dbfunctions.php');
 $dbobject = new dbobject();
+$crossorigin = 'anonymous';
 
 @session_start();
 if (!isset($_SESSION['username_sess'])) {
@@ -46,6 +47,12 @@ $staff_count = 0;
 $sql_staff = "SELECT COUNT(*) as cnt FROM staff WHERE merchant_id='$merchant_id' AND staff_status='1'";
 $result_staff = $dbobject->db_query($sql_staff, true);
 $staff_count = isset($result_staff[0]['cnt']) ? $result_staff[0]['cnt'] : 0;
+
+// Add this before your HTML output to get total new inventory count
+$total_new_inventory = 0;
+$sql_inventory = "SELECT COUNT(*) as cnt FROM inventory WHERE merchant_id='$merchant_id' AND delete_status != '1'";
+$result_inventory = $dbobject->db_query($sql_inventory, true);
+$total_new_inventory = isset($result_inventory[0]['cnt']) ? $result_inventory[0]['cnt'] : 0;
 ?>
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="dark" data-layout="fluid" data-sidebar-theme="dark" data-sidebar-position="left" data-sidebar-behavior="compact">
@@ -62,45 +69,92 @@ $staff_count = isset($result_staff[0]['cnt']) ? $result_staff[0]['cnt'] : 0;
     <link rel="preconnect" href="https://fonts.googleapis.com/">
     <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500&amp;display=swap" rel="stylesheet">
+   <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link class="js-stylesheet" href="css/light.css" rel="stylesheet">
     <link href="css/app.css" rel="stylesheet">
+
+    <!-- Core JS -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    
+    <!-- Custom JS -->
     <script src="js/settings.js"></script>
+
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Q3ZYEKLQ68"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+        gtag('js', new Date());
+        gtag('config', 'G-Q3ZYEKLQ68');
+    </script>
+
     <style>
-        /* Add to your CSS */
-        .sidebar-footer {
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-            background: var(--bs-sidebar-bg, #232e3c);
+        /* Custom styles to ensure Select2 matches your theme */
+        .select2-container--bootstrap-5 .select2-selection {
+            border: 1px solid #dee2e6;
+            border-radius: 0.25rem;
+            padding: 0.375rem 0.75rem;
+            height: calc(1.5em + 0.75rem + 2px);
         }
-        .sidebar-logout-btn {
-            background: var(--bs-sidebar-bg, #232e3c) !important;
-            color: var(--bs-sidebar-color, #fff) !important;
-            border: none;
-            transition: background 0.2s, color 0.2s;
+        
+        .select2-container--bootstrap-5 .select2-selection--single {
+            background-color: #fff;
+            border: 1px solid #dee2e6;
         }
-        .sidebar-logout-btn:hover, .sidebar-logout-btn:focus {
-            background: var(--bs-sidebar-hover-bg, #1a2230) !important;
-            color: var(--bs-sidebar-hover-color, #fff) !important;
+        
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+            color: #212529;
+            line-height: 1.5;
         }
-        .custom-modal {
-          display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100vw; height: 100vh;
-          background: rgba(0,0,0,0.5); justify-content: center; align-items: center;
+        
+        .select2-container--bootstrap-5 .select2-dropdown {
+            border-color: #dee2e6;
+            border-radius: 0.25rem;
         }
-        .custom-modal.show { display: flex; }
-        .custom-modal-content {
-          background: #fff; padding: 2rem 1.5rem 1.5rem 1.5rem; border-radius: 8px; max-width: 600px; width: 95vw; position: relative;
-          box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        
+        .select2-container--bootstrap-5 .select2-results__option--highlighted[aria-selected] {
+            background-color: #0d6efd;
+            color: #fff;
         }
-        .custom-modal-close {
-          position: absolute; top: 10px; right: 20px; font-size: 2rem; color: #333; cursor: pointer; z-index: 2;
+
+        /* Add this to your CSS */
+        .sidebar {
+            transition: transform 0.3s ease;
         }
-        @media (max-width: 600px) {
-          .custom-modal-content { padding: 1rem; }
+
+        .sidebar.sidebar-mobile-open {
+            transform: translateX(0);
+        }
+
+        @media (max-width: 991.98px) {
+            .sidebar {
+                transform: translateX(-100%);
+                position: fixed;
+                z-index: 1050;
+                top: 0;
+                left: 0;
+                height: 100vh;
+                width: 260px;
+                background: #fff;
+            }
+            .sidebar.sidebar-mobile-open {
+                transform: translateX(0);
+            }
         }
     </style>
+    
 </head>
-<body>
+<body data-theme="default" data-layout="fluid" data-sidebar-position="left" data-sidebar-behavior="sticky">
 <div class="wrapper">
+    <!-- Sidebar Navigation (Refactored to match your pasted code) -->
     <nav id="sidebar" class="sidebar">
         <div class="sidebar-content js-simplebar">
             <a class="sidebar-brand" href="home.php">
@@ -115,84 +169,119 @@ $staff_count = isset($result_staff[0]['cnt']) ? $result_staff[0]['cnt'] : 0;
                 <span class="align-middle me-3">Vuvaa Lifestyle</span>
             </a>
             <ul class="sidebar-nav">
-                <li class="sidebar-item active">
-                    <a href="home.php" class="sidebar-link">
-                        <i class="align-middle fa fa-tachometer-alt"></i> <span class="align-middle">Dashboard</span>
-                    </a>
-                </li>
-                <!-- Dynamic Menu Items -->
-                <?php foreach ($menu_list as $value) : ?>
-                    <?php if ($value['has_sub_menu'] == false) : ?>
-                        <li class="sidebar-item">
-                            <a href="javascript:getpage('<?php echo $value['menu_url'] ?>','page')" class="sidebar-link"
-                               title="<?php echo ucfirst($value['menu_name']) ?>">
-                                <i class="fa fa-<?php 
-                                    $menu_name = strtolower($value['menu_name']);
-                                    if (strpos($menu_name, 'user') !== false) echo 'users';
-                                    elseif (strpos($menu_name, 'church') !== false) echo 'church';
-                                    elseif (strpos($menu_name, 'finance') !== false || strpos($menu_name, 'money') !== false) echo 'money';
-                                    elseif (strpos($menu_name, 'report') !== false) echo 'chart-bar';
-                                    elseif (strpos($menu_name, 'setting') !== false) echo 'cog';
-                                    elseif (strpos($menu_name, 'member') !== false) echo 'group';
-                                    elseif (strpos($menu_name, 'tithe') !== false) echo 'leaf';
-                                    elseif (strpos($menu_name, 'offering') !== false) echo 'gift';
-                                    elseif (strpos($menu_name, 'project') !== false) echo 'building';
-                                    elseif (strpos($menu_name, 'donation') !== false) echo 'heart';
-                                    elseif (strpos($menu_name, 'transaction') !== false) echo 'exchange-alt';
-                                    elseif (strpos($menu_name, 'department') !== false) echo 'building';
-                                    elseif (strpos($menu_name, 'staff') !== false) echo 'user-tie';
-                                    elseif (strpos($menu_name, 'items') !== false) echo 'box';
-                                    elseif (strpos($menu_name, 'inventory') !== false) echo 'warehouse';
-                                    else echo 'circle';
-                                ?>" aria-hidden="true"></i>
-                                <span class="align-middle"><?php echo ucfirst($value['menu_name']) ?></span>
-                            </a>
-                        </li>
-                    <?php elseif ($value['has_sub_menu'] == true) : ?>
-                        <li class="sidebar-item">
-                            <a data-bs-target="#submenu-<?php echo $value['menu_id'] ?>" data-bs-toggle="collapse"
-                               class="sidebar-link collapsed"
-                               aria-expanded="false"
-                               title="<?php echo ucfirst($value['menu_name']) ?>">
-                                <i class="<?php echo !empty($value['icon']) ? $value['icon'] : 'fa fa-folder'; ?>" aria-hidden="true"></i>
-                                <span class="align-middle"><?php echo ucfirst($value['menu_name']) ?></span>
-                            </a>
-                            <ul id="submenu-<?php echo $value['menu_id'] ?>" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
-                                <?php foreach ($value['sub_menu'] as $sub_item) : ?>
-                                    <li class="sidebar-item">
-                                        <a class="sidebar-link"
-                                           href="javascript:loadNavPage('<?php echo $sub_item['menu_url'] ?>','page', '<?php echo $sub_item['menu_id'] ?>')"
-                                           title="<?php echo ucfirst($sub_item['name']) ?>">
-                                            <i class="fa fa-angle-right" aria-hidden="true"></i>
-                                            <span><?php echo ucfirst($sub_item['name']) ?></span>
-                                        </a>
-                                    </li>
-                                <?php endforeach; ?>
-                            </ul>
-                        </li>
-                    <?php endif; ?>
-                <?php endforeach; ?>
-            </ul>
-            <!-- Profile & Logout under menu -->
-            <div class="sidebar-footer mt-4">
-                <div class="d-flex align-items-center px-3 py-2">
-                    <img src="<?php echo $_SESSION['photo_path_sess'] ?>" class="rounded-circle me-2" alt="Profile" width="40" height="40" onerror="this.src='img/avatars/avatar.jpg'">
-                    <div>
-                        <div class="fw-bold"><?php echo $merchant_first_name . ' ' . $merchant_last_name; ?></div>
-                        <div class="text-muted small"><?php echo $_SESSION['role_id_sess']; ?></div>
-                    </div>
-                </div>
-                <div class="d-flex flex-column gap-2 px-3 pb-3">
-                    <a href="javascript:getpage('profile.php','page')" class="btn btn-outline-light btn-sm w-100">
-                        <i class="fa fa-user me-1"></i> Profile
-                    </a>
-                    <button class="sidebar-logout-btn btn btn-sm w-100" onclick="confirmLogout()">
-                        <i class="fa fa-sign-out-alt me-1"></i> Logout
-                    </button>
-                </div>
-            </div>
-        </div>
-    </nav>
+                <li class="sidebar-header">Navigation</li>
+            <li class="sidebar-item <?php echo ($_SERVER['PHP_SELF'] == '/home.php') ? 'active' : ''; ?>">
+                <a class="sidebar-link" href="home.php">
+                    <i class="align-middle" data-lucide="home"></i>
+                    <span class="align-middle">Dashboard</span>
+                </a>
+            </li>
+
+ 
+            <?php
+            // Icon mapping for menu names (add more as needed)
+            $icon_map = [
+                'dashboard' => 'home',
+                'users' => 'users',
+                'user' => 'user',
+                'customers' => 'users',
+                'customer' => 'user',
+                'orders' => 'shopping-cart',
+                'order' => 'shopping-cart',
+                'products' => 'package',
+                'product' => 'package',
+                'reports' => 'bar-chart-2',
+                'report' => 'bar-chart-2',
+                'settings' => 'settings',
+                'profile' => 'user',
+                'finance' => 'credit-card',
+                'wallet' => 'wallet',
+                'transactions' => 'repeat',
+                'transaction' => 'repeat',
+                'messages' => 'message-circle',
+                'support' => 'life-buoy',
+                'analytics' => 'activity',
+                'calendar' => 'calendar',
+                'notifications' => 'bell',
+                'files' => 'file-text',
+                'file manager' => 'folder',
+                'department' => 'grid',
+                'tasks' => 'check-square',
+                'task' => 'check-square',
+                'projects' => 'folder',
+                'project' => 'folder',
+                'invoice' => 'file-text',
+                'pricing' => 'tag',
+                'email' => 'mail',
+                'chat' => 'message-circle',
+                'apps' => 'grid',
+                'tools' => 'tool',
+                'components' => 'layers',
+                'pages' => 'layout',
+                'auth' => 'lock',
+                'logout' => 'log-out',
+                // fallback
+                'default' => 'circle'
+            ]; // <-- CLOSE ARRAY AND ADD SEMICOLON HERE
+
+            function get_icon($name, $icon_map) {
+                $key = strtolower(trim($name));
+                return $icon_map[$key] ?? $icon_map['default'];
+            }
+            ?>
+
+            <?php foreach ($menu_list as $value): ?>
+                <?php
+                    $icon = get_icon($value['menu_name'], $icon_map);
+                ?>
+                <?php if (!$value['has_sub_menu']): ?>
+                    <li class="sidebar-item">
+                        <a class="sidebar-link" href="javascript:getpage('<?php echo $value['menu_url'] ?>','page')">
+                            <i class="align-middle" data-lucide="<?php echo $icon; ?>"></i>
+                            <span class="align-middle"><?php echo ucfirst($value['menu_name']) ?></span>
+                        </a>
+                    </li>
+                <?php else: ?>
+                    <li class="sidebar-item">
+                        <a class="sidebar-link collapsed" data-bs-target="#menu-<?php echo $value['menu_id'] ?>" data-bs-toggle="collapse" href="#">
+                            <i class="align-middle" data-lucide="<?php echo $icon; ?>"></i>
+                            <span class="align-middle"><?php echo ucfirst($value['menu_name']) ?></span>
+                        </a>
+                        <ul id="menu-<?php echo $value['menu_id'] ?>" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
+                            <?php foreach ($value['sub_menu'] as $sub): ?>
+                                <?php
+                                    $sub_icon = get_icon($sub['name'], $icon_map);
+                                ?>
+                                <li class="sidebar-item">
+                                    <a class="sidebar-link" href="javascript:getpage('<?php echo $sub['menu_url'] ?>','page')">
+                                        <i class="align-middle" data-lucide="<?php echo $sub_icon; ?>"></i>
+                                        <span class="align-middle"><?php echo ucfirst($sub['name']) ?></span>
+                                    </a>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </li>
+                <?php endif; ?>
+            <?php endforeach; ?>
+
+            <li class="sidebar-header">Account</li>
+            <li class="sidebar-item">
+                <a class="sidebar-link" href="javascript:getpage('profile.php','page')">
+                    <i class="align-middle" data-lucide="user"></i>
+                    <span class="align-middle">Profile</span>
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a class="sidebar-link" href="logout.php">
+                    <i class="align-middle" data-lucide="log-out"></i>
+                    <span class="align-middle">Logout</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+           
     <div class="main">
         <nav class="navbar navbar-expand navbar-bg">
             <a class="sidebar-toggle">
@@ -222,213 +311,187 @@ $staff_count = isset($result_staff[0]['cnt']) ? $result_staff[0]['cnt'] : 0;
                 </li>
             </ul>
         </nav>
-        <main class="content">
-            <div class="container-xl p-0" id="page" style="max-width:900px;">
-                <!-- 1. Welcome Card, Active Departments, and Total Earnings on the same line -->
-                <?php if ($registration_complete == 0): ?>
-                <script>
-                    // On page load, load complete_onboarding.php into #page
-                    document.addEventListener('DOMContentLoaded', function () {
-                        getpage('complete_onboarding.php', 'page');
-                    });
-                </script>
-                <?php else: ?>
-                <div class="row g-3 mb-3 align-items-stretch">
-                    <!-- Welcome Card (left) -->
-                    <div class="col-12 col-lg-6 d-flex">
-                        <div class="card illustration flex-fill shadow-sm border-0 bg-gradient-primary text-white h-100">
-                            <div class="card-body p-0 d-flex flex-fill">
-                                <div class="row g-0 w-100">
-                                    <div class="col-8 d-flex flex-column justify-content-center">
-                                        <div class="p-4">
-                                            <h4 class="fw-bold mb-1">Welcome Back, <?php echo $merchant_first_name; ?>!</h4>
-                                            <p class="mb-0">Vuvaa Dashboard</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-4 align-self-end text-end">
-                                        <img src="img/illustrations/customer-support.png" alt="Customer Support" class="img-fluid illustration-img" style="max-height:70px;">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Active Departments (top right) -->
-                    <div class="col-6 col-lg-3 d-flex">
-                        <div class="card flex-fill shadow-sm border-0 h-100">
-                            <div class="card-body d-flex align-items-center">
-                                <div class="stat-icon bg-primary text-white rounded-circle me-3 d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
-                                    <i class="fa fa-building fa-lg"></i>
-                                </div>
-                                <div>
-                                    <h3 class="mb-1 fw-bold"><?php echo $active_dept_count; ?></h3>
-                                    <div class="text-muted">Active Departments</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Total Earnings (top right) -->
-                    <div class="col-6 col-lg-3 d-flex">
-                        <div class="card flex-fill shadow-sm border-0 h-100">
-                            <div class="card-body d-flex align-items-center">
-                                <div class="stat-icon bg-success text-white rounded-circle me-3 d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
-                                    <i class="fa fa-dollar-sign fa-lg"></i>
-                                </div>
-                                <div>
-                                    <h3 class="mb-1 fw-bold">$24,300</h3>
-                                    <div class="text-muted">Total Earnings</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- 2. Statistics Analysis Cards -->
-                <div class="row g-3 mb-3">
-                    <div class="col-12 col-sm-6 col-lg-4 d-flex">
-                        <div class="card flex-fill shadow-sm border-0">
-                            <div class="card-body py-4 d-flex align-items-center">
-                                <div class="stat-icon bg-info text-white rounded-circle me-3 d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
-                                    <i class="fa fa-users fa-lg"></i>
-                                </div>
-                                <div>
-                                    <h3 class="mb-1 fw-bold"><?php echo $staff_count; ?></h3>
-                                    <div class="text-muted">Currently Employed</div>
-                                    <div class="d-flex align-items-center">
-                                        <span
-                                            class="badge bg-info-subtle text-info me-2"><?php echo $staff_count; ?></span>
-                                        <span class="text-muted small">Staffs Employed</span>
-                                    </div>
-                                   
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                   
-                    <div class="col-12 col-sm-6 col-lg-4 d-flex">
-                        <div class="card flex-fill shadow-sm border-0">
-                            <div class="card-body py-4 d-flex align-items-center">
-                                <div class="stat-icon bg-warning text-white rounded-circle me-3 d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
-                                    <i class="fa fa-briefcase fa-lg"></i>
-                                </div>
-                                <div>
-                                    <h3 class="mb-1 fw-bold">320</h3>
-                                    <div class="d-flex align-items-center">
-                                        <span class="badge bg-warning-subtle text-warning me-2">-1.2%</span>
-                                        <span class="text-muted small">Projects</span>
-                                    </div>
-                                    <div class="text-muted">Active</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Pie Chart Card for Statistics -->
-                    <div class="col-12 col-lg-4 d-flex">
-                        <div class="card flex-fill shadow-sm border-0">
-                            <div class="card-header bg-white border-0 pb-0">
-                                <h5 class="card-title mb-0">Statistics Overview</h5>
-                            </div>
-                            <div class="card-body d-flex flex-column align-items-center justify-content-center">
-                                <canvas id="dashboard-stats-pie" style="max-width:180px;max-height:180px;"></canvas>
-                                <div class="w-100 mt-3">
-                                    <div class="row text-center">
-                                        <div class="col">
-                                            <span class="badge bg-success" style="width:12px;height:12px;display:inline-block;border-radius:50%;"></span>
-                                            <span class="small">Earnings</span>
-                                        </div>
-                                        <div class="col">
-                                            <span class="badge bg-info" style="width:12px;height:12px;display:inline-block;border-radius:50%;"></span>
-                                            <span class="small">Users</span>
-                                        </div>
-                                        <div class="col">
-                                            <span class="badge bg-warning" style="width:12px;height:12px;display:inline-block;border-radius:50%;"></span>
-                                            <span class="small">Projects</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                    
-                    <?php endif; ?>
-                </div>
-               
-              
+        <main class="content" id ="page">
+             <?php if ($registration_complete != 1) {
+        include('complete_onboarding.php');
+    } else { ?>
+    <div class="container-fluid p-0">
+              <div class="row mb-2 mb-xl-3">
+            <div class="col-auto d-none d-sm-block">
+                <h3>Dashboard</h3>
             </div>
-        </main>
-        <style>
-            .stat-icon {
-                font-size: 1.5rem;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-            }
-            .bg-success-subtle { background: #e6f4ea !important; }
-            .bg-info-subtle { background: #e7f3fa !important; }
-            .bg-warning-subtle { background: #fff7e6 !important; }
-            @media (max-width: 1400px) {
-                .container-xl {
-                    max-width: 98vw !important;
-                }
-            }
-        </style>
-        <script>
-            // Statistics Pie Chart (custom, not from backend)
-            $(document).ready(function() {
-                if ($("#dashboard-stats-pie").length) {
-                    new Chart(document.getElementById("dashboard-stats-pie"), {
-                        type: 'doughnut',
-                        data: {
-                            labels: ['Earnings', 'Users', 'Projects'],
-                            datasets: [{
-                                data: [24300, 1250, 320],
-                                backgroundColor: [
-                                    '#22c55e', // green
-                                    '#0ea5e9', // blue
-                                    '#f59e42'  // orange
-                                ],
-                                borderWidth: 2,
-                                borderColor: '#fff',
-                                hoverOffset: 8
-                            }]
-                        },
-                        options: {
-                            cutout: '70%',
-                            plugins: {
-                                legend: { display: false },
-                                tooltip: {
-                                    callbacks: {
-                                        label: function(context) {
-                                            let label = context.label || '';
-                                            let value = context.parsed || 0;
-                                            return `${label}: ${value}`;
-                                        }
-                                    }
-                                }
-                            },
-                            animation: {
-                                animateRotate: true,
-                                animateScale: true
-                            }
-                        }
-                    });
-                }
-            });
-        </script>
+             <div class="col-auto ms-auto text-end mt-n1">
+                <div class="dropdown me-2 d-inline-block position-relative">
+                    <a class="btn btn-light bg-white shadow-sm dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-display="static">
+                        <i class="align-middle mt-n1" data-lucide="calendar"></i> Today
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end">
+                        <h6 class="dropdown-header">Settings</h6>
+                        <a class="dropdown-item" href="#">Action</a>
+                        <a class="dropdown-item" href="#">Another action</a>
+                        <a class="dropdown-item" href="#">Something else here</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="#">Separated link</a>
+                    </div>
+                </div>
+                <button class="btn btn-primary shadow-sm">
+                    <i class="align-middle" data-lucide="filter">&nbsp;</i>
+                </button>
+                <button class="btn btn-primary shadow-sm">
+                    <i class="align-middle" data-lucide="refresh-cw">&nbsp;</i>
+                </button>
+            </div>
+        </div>
+
+         <!-- Stat Cards -->
+        <div class="row">
+            <div class="col-12 col-sm-6 col-xxl-3 d-flex">
+                <div class="card illustration flex-fill">
+                    <div class="card-body p-0 d-flex flex-fill">
+                        <div class="row g-0 w-100">
+                            <div class="col-6">
+                                <div class="illustration-text p-3 m-1">
+                                    <h4 class="illustration-text">Welcome Back, <?php echo $merchant_first_name; ?>!</h4>
+                                    <p class="mb-0">AppStack Dashboard</p>
+                                </div>
+                            </div>
+                            <div class="col-6 align-self-end text-end">
+                                <img src="img/illustrations/customer-support.png" alt="Customer Support" class="img-fluid illustration-img">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-xxl-3 d-flex">
+                <div class="card flex-fill">
+                    <div class="card-body py-4">
+                        <div class="d-flex align-items-start">
+                            <div class="flex-grow-1">
+                                <h3 class="mb-2">$ 18,600</h3>
+                                <p class="mb-2">Total Revenue</p>
+                                <div class="mb-0">
+                                    <span class="badge badge-subtle-success me-2"> +5.35% </span>
+                                    <span class="text-muted">Since last week</span>
+                                </div>
+                            </div>
+                            <div class="d-inline-block ms-3">
+                                <div class="stat">
+                                    <i class="align-middle text-success" data-lucide="dollar-sign"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                     
+        </div>
+
+        
+        <!-- Stat Cards -->
+        <div class="row g-3 mb-3">
+            <!-- Active Departments -->
+            <div class="col-6 col-lg-3 d-flex">
+                <div class="card flex-fill shadow-sm border-0 h-100">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="stat-icon bg-primary text-white rounded-circle me-3 d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
+                            <i class="fa fa-building fa-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-1 fw-bold"><?php echo $active_dept_count; ?></h3>
+                            <div class="text-muted">Active Departments</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Total New Inventory -->
+            <div class="col-6 col-lg-3 d-flex">
+                <div class="card flex-fill shadow-sm border-0 h-100">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="stat-icon bg-success text-white rounded-circle me-3 d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
+                            <i class="fa fa-box fa-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-1 fw-bold"><?php echo $total_new_inventory; ?></h3>
+                            <div class="text-muted">Total New Inventory</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Newly Employed -->
+            <div class="col-12 col-sm-6 col-lg-3 d-flex">
+                <div class="card flex-fill shadow-sm border-0 h-100">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="stat-icon bg-info text-white rounded-circle me-3 d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
+                            <i class="fa fa-users fa-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-1 fw-bold"><?php echo $staff_count; ?></h3>
+                            <div class="text-muted">Newly Employed</div>
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-info-subtle text-info me-2"><?php echo $staff_count; ?></span>
+                                <span class="text-muted small">Staffs Employed</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Projects (leave as is or remove if not needed) -->
+            
+            <!-- Pie Chart Card for Statistics -->
+            <div class="col-12 col-lg-4 d-flex">
+                <div class="card flex-fill shadow-sm border-0">
+                    <div class="card-header bg-white border-0 pb-0">
+                        <h5 class="card-title mb-0">Statistics Overview</h5>
+                    </div>
+                    <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                        <!-- Make sure the canvas has an ID and width/height for Chart.js -->
+                        <canvas id="dashboard-stats-pie" width="180" height="180" style="max-width:180px;max-height:180px;"></canvas>
+                        <div class="w-100 mt-3">
+                            <div class="row text-center">
+                                <div class="col">
+                                    <span class="badge bg-primary" style="width:12px;height:12px;display:inline-block;border-radius:50%;"></span>
+                                    <span class="small">Active Departments</span>
+                                </div>
+                                <div class="col">
+                                    <span class="badge bg-info" style="width:12px;height:12px;display:inline-block;border-radius:50%;"></span>
+                                    <span class="small">Newly Employed</span>
+                                </div>
+                                <div class="col">
+                                    <span class="badge bg-success" style="width:12px;height:12px;display:inline-block;border-radius:50%;"></span>
+                                    <span class="small">Total New Inventory</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End Stat Cards -->
+        <?php } ?>
     </div>
-</div>
+</main>
+<!-- ...rest of your code remains unchanged... -->
 <!-- Custom Modal -->
-<div id="customModal" class="custom-modal">
-  <div class="custom-modal-content" id="customModalContent">
-    <span class="custom-modal-close" onclick="closeCustomModal()">&times;</span>
-    <!-- Modal content will be loaded here -->
-  </div>
-</div>
-<div class="modal fade" id="defaultModalPrimary" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content" id="modal_div">
-      <!-- Modal content will be loaded here -->
+<div class="modal fade" id="defaultModalPrimary" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content" id="modal_div">
+            <div class="modal-header">
+                <h5 class="modal-title">Default modal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body m-3">
+                <p class="mb-0">Use Bootstrap's JavaScript modal plugin to add dialogs to your site for lightboxes, user notifications, or completely custom content.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Save changes</button>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
+
+</div>
+  
 <script src="js/app.js"></script>
 <script src="js/jquery-3.6.0.min.js"></script>
 <script src="js/jquery.dataTables.min.js"></script>
@@ -439,7 +502,9 @@ $staff_count = isset($result_staff[0]['cnt']) ? $result_staff[0]['cnt'] : 0;
 <script src="js/owl.carousel.js"></script>
 <script src="js/chart.min.js"></script>
 <script src="js/bootstrap.min.js"></script>
+<script src="js/chart.min.js"></script>
 <script>
+    // Logout confirmation using SweetAlert or fallback to confirm dialog
     function confirmLogout() {
         if (typeof Swal === 'undefined') {
             if (confirm('Are you sure you want to sign out?')) {
@@ -468,28 +533,58 @@ $staff_count = isset($result_staff[0]['cnt']) ? $result_staff[0]['cnt'] : 0;
                 });
                 setTimeout(() => { window.location.href = 'logout.php'; }, 1000);
             }
-        }).catch((error) => {
+        }).catch(() => {
             window.location.href = 'logout.php';
         });
     }
     window.confirmLogout = confirmLogout;
 
+    // Sidebar active state management
     function setActiveMenuByUrl(url) {
         // Remove active from all
-        $('.sidebar-item').removeClass('active');
-        // For main menu
-        $('.sidebar-link').each(function() {
-            let href = $(this).attr('href');
-            // For javascript:getpage('page.php','page') or javascript:loadNavPage('page.php','page',...)
+        document.querySelectorAll('.sidebar-item').forEach(function(item) {
+            item.classList.remove('active');
+        });
+        // Find the sidebar-link that matches the url
+        document.querySelectorAll('.sidebar-link').forEach(function(link) {
+            // For javascript:getpage('page.php','page')
+            let href = link.getAttribute('href');
             if (href && href.indexOf(url) !== -1) {
-                $(this).closest('.sidebar-item').addClass('active');
+                link.closest('.sidebar-item').classList.add('active');
                 // If submenu, also open parent
-                $(this).parents('.sidebar-dropdown').addClass('show');
-                $(this).parents('.sidebar-item').children('.sidebar-link').removeClass('collapsed');
+                let parentDropdown = link.closest('.sidebar-dropdown');
+                if (parentDropdown) {
+                    parentDropdown.classList.add('show');
+                    let parentItem = parentDropdown.closest('.sidebar-item');
+                    if (parentItem) {
+                        parentItem.querySelector('.sidebar-link').classList.remove('collapsed');
+                    }
+                }
             }
         });
     }
 
+    // Intercept sidebar-link clicks for active state and logout
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.sidebar-link').forEach(function(link) {
+            link.addEventListener('click', function(e) {
+                // If it's the logout link, show confirmation
+                if (this.getAttribute('href') === 'logout.php') {
+                    e.preventDefault();
+                    confirmLogout();
+                    return false;
+                }
+                // Remove active from all, add to this
+                document.querySelectorAll('.sidebar-item').forEach(function(item) {
+                    item.classList.remove('active');
+                });
+                let parent = this.closest('.sidebar-item');
+                if (parent) parent.classList.add('active');
+            });
+        });
+    });
+
+    // If you use getpage() or loadNavPage(), call setActiveMenuByUrl(url) after loading
     function getpage(url, target) {
         $("#" + target).html('<div class="text-center p-5"><i class="fa fa-spinner fa-spin fa-2x"></i> Loading...</div>');
         $.get(url, function(data) {
@@ -497,7 +592,6 @@ $staff_count = isset($result_staff[0]['cnt']) ? $result_staff[0]['cnt'] : 0;
             setActiveMenuByUrl(url);
         });
     }
-
     function loadNavPage(url, target, menu_id) {
         $("#" + target).html('<div class="text-center p-5"><i class="fa fa-spinner fa-spin fa-2x"></i> Loading...</div>');
         $.get(url, function(data) {
@@ -505,130 +599,57 @@ $staff_count = isset($result_staff[0]['cnt']) ? $result_staff[0]['cnt'] : 0;
             setActiveMenuByUrl(url);
         });
     }
-
-    $(document).ready(function() {
-        // Load Pie Distribution with a beautiful chart design
-        $.post('utilities.php', {
-            op: 'Dashboard.topFiveChurches'
-        }, function(dd) {
-            $("#tfive").html(dd.topfive);
-
-            // Enhanced Pie Chart Design
-            const ctxPie = document.getElementById("chartjs-dashboard-pie").getContext('2d');
-            new Chart(ctxPie, {
-                type: 'doughnut',
-                data: dd.pie.data,
-                options: {
-                    responsive: true,
-                    cutout: '65%', // Makes it a doughnut
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'bottom',
-                            labels: {
-                                color: getComputedStyle(document.body).getPropertyValue('--bs-body-color') || '#333',
-                                font: {
-                                    size: 14,
-                                    weight: 'bold'
-                                },
-                                padding: 20,
-                                boxWidth: 18
-                            }
-                        },
-                        tooltip: {
-                            enabled: true,
-                            backgroundColor: '#fff',
-                            titleColor: '#333',
-                            bodyColor: '#333',
-                            borderColor: '#e5e7eb',
-                            borderWidth: 1,
-                            padding: 12,
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.label || '';
-                                    let value = context.parsed || 0;
-                                    let total = context.chart._metasets[context.datasetIndex].total || 1;
-                                    let percent = ((value / total) * 100).toFixed(1);
-                                    return `${label}: ${value} (${percent}%)`;
-                                }
-                            }
-                        }
-                    },
-                    animation: {
-                        animateRotate: true,
-                        animateScale: true
-                    }
-                }
-            });
-        }, 'json');
-        
-        // Line Chart
-        $.post('utilities.php', {
-            op: 'Dashboard.remittance'
-        }, function(dd) {
-            new Chart(document.getElementById("chartjs-dashboard-line"), dd);
-        }, 'json');
-
-        // DataTable
-        $("#datatables-dashboard-projects").DataTable({
-            destroy: true,
-            pageLength: 6,
-            lengthChange: false,
-            bFilter: false,
-            autoWidth: false
-        });
-
-        // Statistics Pie Chart (custom, not from backend)
-        if ($("#dashboard-stats-pie").length) {
-            new Chart(document.getElementById("dashboard-stats-pie"), {
-                type: 'doughnut',
-                data: {
-                    labels: ['Earnings', 'Users', 'Projects'],
-                    datasets: [{
-                        data: [24300, 1250, 320],
-                        backgroundColor: [
-                            '#22c55e', // green
-                            '#0ea5e9', // blue
-                            '#f59e42'  // orange
-                        ],
-                        borderWidth: 2,
-                        borderColor: '#fff',
-                        hoverOffset: 8
-                    }]
-                },
-                options: {
-                    cutout: '70%',
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.label || '';
-                                    let value = context.parsed || 0;
-                                    return `${label}: ${value}`;
-                                }
-                            }
-                        }
-                    },
-                    animation: {
-                        animateRotate: true,
-                        animateScale: true
-                    }
-                }
-            });
-        }
-    });
-    function openCustomModal(content) {
-      document.getElementById('customModalContent').innerHTML = '<span class="custom-modal-close" onclick="closeCustomModal()">&times;</span>' + content;
-      document.getElementById('customModal').classList.add('show');
-    }
-    function closeCustomModal() {
-      document.getElementById('customModal').classList.remove('show');
-    }
-    // Optional: close modal on background click
-    document.getElementById('customModal').onclick = function(e) {
-      if (e.target === this) closeCustomModal();
-    };
 </script>
-</body>
-</html>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Remove any previous chart instance to avoid errors
+    if (window.statsPieChart && typeof window.statsPieChart.destroy === 'function') {
+        window.statsPieChart.destroy();
+    }
+    var pieCanvas = document.getElementById("dashboard-stats-pie");
+    if (pieCanvas && typeof Chart !== 'undefined') {
+        window.statsPieChart = new Chart(pieCanvas, {
+            type: 'doughnut',
+            data: {
+                labels: ['Active Departments', 'Newly Employed', 'Total New Inventory'],
+                datasets: [{
+                    data: [
+                        <?php echo (int)$active_dept_count; ?>,
+                        <?php echo (int)$staff_count; ?>,
+                        <?php echo (int)$total_new_inventory; ?>
+                    ],
+                    backgroundColor: [
+                        '#2563eb', // blue
+                        '#0ea5e9', // info
+                        '#22c55e'  // green
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#fff',
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                cutout: '70%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                let value = context.parsed || 0;
+                                return `${label}: ${value}`;
+                            }
+                        }
+                    }
+                },
+                animation: {
+                    animateRotate: true,
+                    animateScale: true
+                }
+            }
+        });
+    }
+});
+</script>
+<!-- ...existing code... -->
