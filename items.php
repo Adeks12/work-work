@@ -1,18 +1,18 @@
 <div class="container-fluid p-0">
     <div class="card">
         <div class="card-header">
-            <h5 class="card-title">Item Category Management</h5>
-            <h6 class="card-subtitle text-muted">The report contains Item Categories that have been setup in the system.
+            <h5 class="card-title">Item Management</h5>
+            <h6 class="card-subtitle text-muted">The report contains Items that have been setup in the system.
             </h6>
         </div>
         <div class="card-body">
-            <a class="btn btn-warning mb-3" onclick="loadModal('setup/item_cat_setup.php','modal_div')"
+            <a class="btn btn-outline-warning mb-3" onclick="loadModal('setup/item_cat_setup.php','modal_div')"
                 href="javascript:void(0)" data-toggle="modal" data-target="#defaultModalPrimary">
-                <i class="fas fa-plus"></i> Create Item Category
+               Create Item 
             </a>
 
             <div class="mb-3">
-                <label for="parentCatFilter" class="form-label">Filter by Main Category:</label>
+                <label for="parentCatFilter" class="form-label">Filter by Allocation Status:</label>
                 <select id="parentCatFilter" class="form-select" style="width:auto; display:inline-block;">
                     <option value="all">All Categories</option>
                     <!-- Main categories will be loaded here by JS -->

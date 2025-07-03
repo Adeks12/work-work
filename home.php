@@ -16,20 +16,19 @@ $menu_list = $menu_list['data'];
 $sql = "SELECT bank_name,account_no,account_name,registration_completed, merchant_id FROM userdata WHERE username = '$_SESSION[username_sess]' LIMIT 1 ";
 $user_det = $dbobject->db_query($sql);
 
+
 $registration_complete = isset($user_det[0]['registration_completed']) ? $user_det[0]['registration_completed'] : 0;
 $merchant_id = isset($user_det[0]['merchant_id']) ? $user_det[0]['merchant_id'] : 0;
 
-$sql2 = "SELECT merchant_first_name FROM merchant_reg WHERE merchant_id = '$merchant_id' LIMIT 1";
-$sql3 = "SELECT merchant_last_name FROM merchant_reg WHERE merchant_id = '$merchant_id' LIMIT 1";
+$sql2 = "SELECT * FROM merchant_reg WHERE merchant_id = '$merchant_id' LIMIT 1";
 $user_det2 = $dbobject->db_query($sql2);
-$user_det3 = $dbobject->db_query($sql3);
-$merchant_first_name = isset($user_det2[0]['merchant_first_name']) ? $user_det2[0]['merchant_first_name'] : '';
-$merchant_last_name = isset($user_det3[0]['merchant_last_name']) ? $user_det3[0]['merchant_last_name'] : '';
-
+$merchant_first_name = isset($user_det2[0]['merchant_business_name']) ? $user_det2[0]['merchant_business_name'] : '';
+$merchant_email = isset($user_det2[0]['merchant_email']) ? $user_det2[0]['merchant_email'] : '';
 header("Cache-Control: no-cache;no-store, must-revalidate");
 header_remove("X-Powered-By");
 header_remove("Server");
 header('X-Frame-Options: SAMEORIGIN');
+// <?php echo $_SESSION['photo_path_sess'] 
 
 // Get active department count using your Department class
 require_once('class/department.php');
@@ -44,7 +43,7 @@ if ($merchant_id) {
 
 // Get total number of employed staffs (staff_status = '1')
 $staff_count = 0;
-$sql_staff = "SELECT COUNT(*) as cnt FROM staff WHERE merchant_id='$merchant_id' AND staff_status='1'";
+$sql_staff = "SELECT COUNT(*) as cnt FROM staff WHERE merchant_id='$merchant_id' AND status='1'";
 $result_staff = $dbobject->db_query($sql_staff, true);
 $staff_count = isset($result_staff[0]['cnt']) ? $result_staff[0]['cnt'] : 0;
 
@@ -149,6 +148,20 @@ $total_new_inventory = isset($result_inventory[0]['cnt']) ? $result_inventory[0]
                 transform: translateX(0);
             }
         }
+
+        /* Add this inside your <style> tag in <head> or in your CSS file */
+.sidebar-item.active > .sidebar-link,
+.sidebar-dropdown .sidebar-item.active > .sidebar-link {
+    background: rgba(255,255,255,0.65) !important; /* More transparent */
+    color: #222 !important;
+    font-weight: 600;
+    border-radius: 0; /* Remove radius to avoid overlap */
+    box-shadow: none; /* Remove shadow to prevent overlay */
+    position: relative;
+    z-index: 1;
+}
+
+
     </style>
     
 </head>
@@ -160,7 +173,7 @@ $total_new_inventory = isset($result_inventory[0]['cnt']) ? $result_inventory[0]
         <a class="sidebar-brand bg-dark text-white" href="home.php" style="display: flex; align-items: center; padding: 1rem; border-bottom: 1px solid #222;">
             <!-- If you have a logo SVG or image, put it here -->
             <!-- <img src="img/icon.png" alt="Logo" width="32" height="32" class="me-2"> -->
-            <span class="align-middle me-3" style="font-weight:600;">Vuvaa Lifestyle</span>
+            <span class="align-middle me-3" style="font-weight:600;">Inventory Management</span>
         </a>
         <ul class="sidebar-nav">
             <li class="sidebar-header">Navigation</li>
@@ -175,50 +188,67 @@ $total_new_inventory = isset($result_inventory[0]['cnt']) ? $result_inventory[0]
             <?php
             // Icon mapping for menu names (add more as needed)
             $icon_map = [
-                'dashboard' => 'home',
-                'users' => 'users',
-                'user' => 'user',
-                'customers' => 'users',
-                'customer' => 'user',
-                'orders' => 'shopping-cart',
-                'order' => 'shopping-cart',
-                'products' => 'package',
-                'product' => 'package',
-                'reports' => 'bar-chart-2',
-                'report' => 'bar-chart-2',
-                'settings' => 'settings',
-                'profile' => 'user',
-                'finance' => 'credit-card',
-                'wallet' => 'wallet',
-                'transactions' => 'repeat',
-                'transaction' => 'repeat',
-                'messages' => 'message-circle',
-                'support' => 'life-buoy',
-                'analytics' => 'activity',
-                'calendar' => 'calendar',
-                'notifications' => 'bell',
-                'files' => 'file-text',
-                'file manager' => 'folder',
-                'department' => 'grid',
-                'items category' => 'box',
-                'staff' => 'users',
-                'inventory' => 'archive',
-                'tasks' => 'check-square',
-                'task' => 'check-square',
-                'projects' => 'folder',
-                'project' => 'folder',
-                'invoice' => 'file-text',
-                'pricing' => 'tag',
-                'email' => 'mail',
-                'chat' => 'message-circle',
-                'apps' => 'grid',
-                'tools' => 'tool',
-                'components' => 'layers',
-                'pages' => 'layout',
-                'auth' => 'lock',
-                'logout' => 'log-out',
-                // fallback
-                'default' => 'circle'
+                // Dashboard & Overview
+    'dashboard' => 'home',
+    'overview cards' => 'layout-dashboard',
+    'total items' => 'list',
+    'allocated' => 'check-circle',
+    'available' => 'circle',
+    'quick charts' => 'donut',
+    'recent stock movement' => 'line-chart',
+
+    // Company Management
+    'company management' => 'building-2',
+    'profile' => 'user-circle',
+    'settings' => 'settings',
+
+    // Staff & Accounts
+    'staffs & account' => 'users',
+    'manage staff' => 'user-plus',
+    'manage sub-accounts' => 'users',
+    'manage departments' => 'building',
+
+    // Inventory
+    'inventory' => 'archive',
+    'item categories' => 'list',
+    'all items' => 'box',
+    'replenish' => 'truck',
+    'restock/ replenish' => 'truck',
+    'damaged items' => 'trash-2',
+
+    // Allocation
+    'allocation' => 'sliders-horizontal',
+    'allocate items' => 'arrow-right-square',
+    'view allocations' => 'eye',
+    'return items' => 'undo-2',
+
+    // Store
+    'store' => 'store',
+    'manage store sections' => 'store',
+    'manage store' => 'store',
+
+    // Reports
+    'reports' => 'file-bar-chart',
+    'allocation reports' => 'file-bar-chart',
+    'stock movement logs' => 'history',
+    'staff usage reports' => 'user-clock',
+    'export csv/pdf' => 'file-output',
+
+    // Audit Logs
+    'audit logs' => 'file-text',
+    'all user actions' => 'user-search',
+    'inventory logs' => 'clipboard-list',
+
+    // Settings
+    'roles & permission' => 'key-round',
+    'change password' => 'lock',
+    'system preferences' => 'sliders-horizontal',
+
+    // Logout
+    'logout' => 'log-out',
+
+    // Default fallback
+    'default' => 'layers'
             ]; // <-- CLOSE ARRAY AND ADD SEMICOLON HERE
 
             function get_icon($name, $icon_map) {
@@ -260,11 +290,12 @@ $total_new_inventory = isset($result_inventory[0]['cnt']) ? $result_inventory[0]
                     </li>
                 <?php endif; ?>
             <?php endforeach; ?>
+            
 
             <li class="sidebar-header">Account</li>
             <li class="sidebar-item">
                 <a class="sidebar-link" href="javascript:getpage('profile.php','page')">
-                    <i class="align-middle" data-lucide="user"></i>
+                    <i class="align-middle" data-lucide="user-circle"></i>
                     <span class="align-middle">Profile</span>
                 </a>
             </li>
@@ -295,8 +326,8 @@ $total_new_inventory = isset($result_inventory[0]['cnt']) ? $result_inventory[0]
             <ul class="navbar-nav navbar-align ms-auto">
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle d-none d-sm-inline-block" href="#" data-bs-toggle="dropdown">
-                        <img src="<?php echo $_SESSION['photo_path_sess'] ?>" class="avatar img-fluid rounded-circle me-1" alt="Profile" />
-                        <span class="text-dark"><?php echo $_SESSION['firstname_sess'] . ' ' . $_SESSION['lastname_sess']; ?></span>
+                        <img src="" class="avatar img-fluid rounded-circle me-1" alt="Profile" />
+                        <span class="text-dark"><?= $merchant_first_name ?></span>
                     </a>
                     <div class="dropdown-menu dropdown-menu-end">
                         <a class="dropdown-item" href="javascript:getpage('profile.php','page')">
@@ -342,7 +373,7 @@ $total_new_inventory = isset($result_inventory[0]['cnt']) ? $result_inventory[0]
 
          <!-- Stat Cards -->
         <div class="row">
-            <div class="col-12 col-sm-6 col-xxl-3 d-flex">
+            <div class="col-12 col-sm-7 col-xxl-6 d-flex">
                 <div class="card illustration flex-fill">
                     <div class="card-body p-0 d-flex flex-fill">
                         <div class="row g-0 w-100">
@@ -563,24 +594,73 @@ $total_new_inventory = isset($result_inventory[0]['cnt']) ? $result_inventory[0]
 
     // Intercept sidebar-link clicks for active state and logout
     document.addEventListener('DOMContentLoaded', function () {
-        document.querySelectorAll('.sidebar-link').forEach(function(link) {
-            link.addEventListener('click', function(e) {
-                // If it's the logout link, show confirmation
-                if (this.getAttribute('href') === 'logout.php') {
-                    e.preventDefault();
-                    confirmLogout();
-                    return false;
-                }
-                // Remove active from all, add to this
-                document.querySelectorAll('.sidebar-item').forEach(function(item) {
-                    item.classList.remove('active');
-                });
+    // Sidebar link click handler for active state and submenu toggling
+    document.querySelectorAll('.sidebar-link').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            // Logout link
+            if (this.getAttribute('href') === 'logout.php') {
+                e.preventDefault();
+                confirmLogout();
+                return false;
+            }
+
+            // Remove active from all sidebar-items
+            document.querySelectorAll('.sidebar-item').forEach(function(item) {
+                item.classList.remove('active');
+            });
+
+            // If this is a submenu toggle
+            if (this.classList.contains('collapsed') && this.hasAttribute('data-bs-toggle')) {
+                // Add active to the parent sidebar-item
                 let parent = this.closest('.sidebar-item');
                 if (parent) parent.classList.add('active');
-            });
+                // Let the submenu toggle logic below handle collapse/expand
+            } else {
+                // For normal links and sub-menu links
+                let parent = this.closest('.sidebar-item');
+                if (parent) {
+                    parent.classList.add('active');
+                    // If this is a sub-menu link, also set parent sidebar-item as active
+                    let parentDropdown = parent.closest('.sidebar-dropdown');
+                    if (parentDropdown) {
+                        let parentSidebarItem = parentDropdown.closest('.sidebar-item');
+                        if (parentSidebarItem) parentSidebarItem.classList.add('active');
+                    }
+                }
+            }
         });
     });
 
+    // --- Fix for submenu collapse/expand ---
+    document.querySelectorAll('.sidebar-link.collapsed[data-bs-toggle="collapse"]').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = link.getAttribute('data-bs-target');
+            const submenu = document.querySelector(targetId);
+
+            // Close all other open submenus
+            document.querySelectorAll('.sidebar-dropdown.show').forEach(function(openMenu) {
+                if (openMenu !== submenu) {
+                    openMenu.classList.remove('show');
+                    const parentLink = openMenu.closest('.sidebar-item').querySelector('.sidebar-link');
+                    if (parentLink) parentLink.classList.add('collapsed');
+                }
+            });
+
+            // Toggle this submenu
+            if (submenu.classList.contains('show')) {
+                submenu.classList.remove('show');
+                link.classList.add('collapsed');
+            } else {
+                submenu.classList.add('show');
+                link.classList.remove('collapsed');
+            }
+        });
+    });
+
+    // On page load, set active menu based on current URL or state
+    setActiveMenuByUrl(window.location.pathname.split('/').pop());
+});
     // If you use getpage() or loadNavPage(), call setActiveMenuByUrl(url) after loading
     function getpage(url, target) {
         $("#" + target).html('<div class="text-center p-5"><i class="fa fa-spinner fa-spin fa-2x"></i> Loading...</div>');

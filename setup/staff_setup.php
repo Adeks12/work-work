@@ -7,9 +7,8 @@ $user = $_SESSION['username_sess'];
 $sql = ("SELECT merchant_id FROM userdata WHERE username = '$user' LIMIT 1");
 $doquery= $dbobject->db_query($sql, true);
 $merchant_id = $doquery[0]['merchant_id'];
-$sql1 = ("SELECT depmt_id, depmt_name FROM department WHERE merchant_id = '$merchant_id' ORDER BY
-depmt_name");
-$departments = $dbobject->db_query($sql1, true);
+$sql1 = ("SELECT staff_id, full_name FROM staff WHERE depmt_head = '1' AND merchant_id = '$merchant_id' ORDER BY full_name ASC");
+$departmentHead = $dbobject->db_query($sql1, true);
 
 if(isset($_REQUEST['op']) && $_REQUEST['op'] == 'edit')
 {
@@ -75,143 +74,267 @@ else
         <input type="hidden" name="staff_id" value="<?php echo $staff_id; ?>">
         <?php endif; ?>
 
-        <div class="row">
-            <div class="col-sm-6">
-                <div class="form-group">
-                    <label class="form-label">First Name<span class="asterik">*</span></label>
-                    <input type="text" name="staff_first_name" id="staff_first_name" class="form-control"
-                        value="<?php echo ($operation == "edit" && $staff && isset($staff['staff_first_name'])) ? htmlspecialchars($staff['staff_first_name']) : ""; ?>"
-                        placeholder="Enter first name" autocomplete="off" required>
-                    <div class="invalid-feedback">Please enter the first name.</div>
-                </div>
-            </div>
-            <div class="col-sm-6">
-                <div class="form-group">
-                    <label class="form-label">Last Name<span class="asterik">*</span></label>
-                    <input type="text" name="staff_last_name" id="staff_last_name" class="form-control"
-                        value="<?php echo ($operation == "edit" && $staff && isset($staff['staff_last_name'])) ? htmlspecialchars($staff['staff_last_name']) : ""; ?>"
-                        placeholder="Enter last name" autocomplete="off" required>
-                    <div class="invalid-feedback">Please enter the last name.</div>
-                </div>
-            </div>
+        <!-- Progress Bar -->
+        <div class="progress mb-4" style="height: 20px;">
+            <div class="progress-bar" id="formProgressBar" role="progressbar" style="width: 33%;" aria-valuenow="33" aria-valuemin="0" aria-valuemax="100">Step 1 of 3</div>
         </div>
-        <div class="row">
-            <div class="col-sm-6">
-                <div class="form-group">
-                    <label class="form-label">Email<span class="asterik">*</span></label>
-                    <input type="email" name="staff_email" id="staff_email" class="form-control"
-                        value="<?php echo ($operation == "edit" && $staff && isset($staff['staff_email'])) ? htmlspecialchars($staff['staff_email']) : ""; ?>"
-                        placeholder="Enter email" autocomplete="off" required>
-                    <div class="invalid-feedback">Please enter the email.</div>
+
+        <!-- Step 1: Personal Information -->
+        <div class="form-step" id="step-1">
+            <h5>Personal Information</h5>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="form-label">Full Name<span class="asterik">*</span></label>
+                        <input type="text" name="full_name" id="full_name" class="form-control"
+                            value="<?php echo ($operation == "edit" && $staff && isset($staff['full_name'])) ? htmlspecialchars($staff['full_name']) : ""; ?>"
+                            placeholder="Enter full name" required>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="form-label">Address<span class="asterik">*</span></label>
+                        <input type="text" name="address" id="address" class="form-control"
+                            value="<?php echo ($operation == "edit" && $staff && isset($staff['address'])) ? htmlspecialchars($staff['address']) : ""; ?>"
+                            placeholder="Enter address" required>
+                    </div>
                 </div>
             </div>
-            <div class="col-sm-6">
-                <div class="form-group">
-                    <label class="form-label">Phone Number<span class="asterik">*</span></label>
-                    <input type="text" name="staff_phone_no" id="staff_phone_no" class="form-control"
-                        value="<?php echo ($operation == "edit" && $staff && isset($staff['staff_phone_no'])) ? htmlspecialchars($staff['staff_phone_no']) : ""; ?>"
-                        placeholder="Enter phone number" autocomplete="off" required>
-                    <div class="invalid-feedback">Please enter the phone number.</div>
+
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="form-label">Phone Number </label>
+                        <input type="text" name="cell_phone" id="cell_phone" class="form-control"
+                            value="<?php echo ($operation == "edit" && $staff && isset($staff['cell_phone'])) ? htmlspecialchars($staff['cell_phone']) : ""; ?>"
+                            placeholder="(         )">
+                    </div>
                 </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="form-label">Phone Number (optional)</label>
+                        <input type="text" name="home_phone" id="home_phone" class="form-control"
+                            value="<?php echo ($operation == "edit" && $staff && isset($staff['home_phone'])) ? htmlspecialchars($staff['home_phone']) : ""; ?>"
+                            placeholder="(         )">
+                    </div>
+                </div>
+                
+            </div>
+
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="form-label">Email Address</label>
+                        <input type="email" name="personal_email" id="personal_email" class="form-control"
+                            value="<?php echo ($operation == "edit" && $staff && isset($staff['personal_email'])) ? htmlspecialchars($staff['personal_email']) : ""; ?>"
+                            placeholder="Enter personal email">
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="form-label">State Means of ID & Number</label>
+                        <input type="text" name="state_id_number" id="state_id_number" class="form-control"
+                            value="<?php echo ($operation == "edit" && $staff && isset($staff['state_id_number'])) ? htmlspecialchars($staff['state_id_number']) : ""; ?>"
+                            placeholder="e.g. NIN/Passport/Driver’s license number">
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-4">
+                    <div class="form-group">
+                        <label class="form-label">Birth Date</label>
+                        <input type="date" name="birth_date" id="birth_date" class="form-control"
+                            value="<?php echo ($operation == "edit" && $staff && isset($staff['birth_date'])) ? htmlspecialchars($staff['birth_date']) : ""; ?>">
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="form-group">
+                        <label class="form-label">Marital Status</label>
+                        <select name="marital_status" id="marital_status" class="form-select">
+                            <option value="">:: SELECT ::</option>
+                            <option value="Single" <?php echo ($operation == "edit" && $staff && isset($staff['marital_status']) && $staff['marital_status'] == 'Single') ? 'selected' : ''; ?>>Single</option>
+                            <option value="Married" <?php echo ($operation == "edit" && $staff && isset($staff['marital_status']) && $staff['marital_status'] == 'Married') ? 'selected' : ''; ?>>Married</option>
+                            <option value="Divorced" <?php echo ($operation == "edit" && $staff && isset($staff['marital_status']) && $staff['marital_status'] == 'Divorced') ? 'selected' : ''; ?>>Divorced</option>
+                            <option value="Widowed" <?php echo ($operation == "edit" && $staff && isset($staff['marital_status']) && $staff['marital_status'] == 'Widowed') ? 'selected' : ''; ?>>Widowed</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="form-group">
+                        <label class="form-label">Spouse’s Name</label>
+                        <input type="text" name="spouse_name" id="spouse_name" class="form-control"
+                            value="<?php echo ($operation == "edit" && $staff && isset($staff['spouse_name'])) ? htmlspecialchars($staff['spouse_name']) : ""; ?>"
+                            placeholder="Enter spouse's name">
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="form-label">Spouse’s Employer</label>
+                        <input type="text" name="spouse_employer" id="spouse_employer" class="form-control"
+                            value="<?php echo ($operation == "edit" && $staff && isset($staff['spouse_employer'])) ? htmlspecialchars($staff['spouse_employer']) : ""; ?>"
+                            placeholder="Enter spouse's employer">
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="form-label">Spouse’s Cell Phone</label>
+                        <input type="text" name="spouse_cell_phone" id="spouse_cell_phone" class="form-control"
+                            value="<?php echo ($operation == "edit" && $staff && isset($staff['spouse_cell_phone'])) ? htmlspecialchars($staff['spouse_cell_phone']) : ""; ?>"
+                            placeholder="(         )">
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end mt-3">
+                <button type="button" class="btn btn-primary" id="nextBtn1">Next</button>
             </div>
         </div>
 
-        <div class="row">
-            <div class="col-sm-6">
-                <div class="form-group">
-                    <label class="form-label">Staff Address</label>
-                    <input type="text" name="staff_address" id="staff_address"
-                        value="<?php echo ($operation == "edit" && $staff && isset($staff['staff_address'])) ? htmlspecialchars($staff['staff_address']) : "" ?>"
-                        class="form-control" placeholder="Enter staff address" autocomplete="off">
-                    <div class="invalid-feedback">Please enter the staff address.</div>
+        <!-- Step 2: Job Information -->
+        <div class="form-step d-none" id="step-2">
+            <h5>Job Information</h5>
+            <div class="row">
+                <div class="col-sm-4">
+                    <div class="form-group">
+                        <label class="form-label">Title</label>
+                        <input type="text" name="job_title" id="job_title" class="form-control"
+                            value="<?php echo ($operation == "edit" && $staff && isset($staff['job_title'])) ? htmlspecialchars($staff['job_title']) : ""; ?>"
+                            placeholder="Enter job title">
+                    </div>
                 </div>
-            </div>
-            <div class="col-sm-6">
-                <div class="form-group">
-                    <label class="form-label">Department<span class="asterik">*</span></label>
-                    <select name="depmt_id" id="depmt_id" class="form-select" required>
-                        <option value="">:: SELECT DEPARTMENT ::</option>
-                        <?php
-                        if (is_array($departments)) {
-                            foreach ($departments as $dept) {
-                                $selected = ($operation == "edit" && $staff && isset($staff['depmt_id']) && $staff['depmt_id'] == $dept['depmt_id']) ? "selected" : "";
-                                echo "<option value=\"{$dept['depmt_id']}\" $selected>{$dept['depmt_name']}</option>";
+                <div class="col-sm-4">
+                    <div class="form-group">
+                        <label class="form-label">Head of Dept</label>
+                        <select name="head_of_dept" id="head_of_dept" class="form-select">
+                            <option value="">:: SELECT HEAD OF DEPARTMENT ::</option>
+                            <?php
+                            foreach($departmentHead as $head) {
+                                $selected = ($operation == "edit" && $staff && isset($staff['depmt_head']) && $staff['depmt_head'] == $head['staff_id']) ? 'selected' : '';
+                                echo "<option value='{$head['staff_id']}' $selected>{$head['full_name']}</option>";
                             }
-                        }
-                        ?>
-                    </select>
-                    <div class="invalid-feedback">Please select a department.</div>
-                </div>
-            </div>
-        </div>
-
-        <?php if($operation == "edit"): ?>
-        <div class="row">
-            <div class="col-sm-6">
-                <div class="form-group">
-                    <label class="form-label">Staff Code</label>
-                    <input type="text" name="staff_code" class="form-control"
-                        value="<?php echo ($staff && isset($staff['staff_code'])) ? htmlspecialchars($staff['staff_code']) : ""; ?>"
-                        placeholder="Auto-generated" readonly>
-                    <small class="text-muted">Staff code is auto-generated and cannot be changed</small>
-                </div>
-            </div>
-            <div class="col-sm-6">
-                <div class="form-group">
-                    <label class="form-label" style="display:block !important">Staff Status<span
-                            class="asterik">*</span></label>
-                    <div class="input-group">
-                        <select class="form-select" name="staff_status" id="staff_status" required>
-                            <option value="">:: SELECT STATUS ::</option>
-                            <option value="1"
-                                <?php echo ($operation == "edit" && $staff && isset($staff['staff_status']) && $staff['staff_status'] == '1') ? 'selected' : ''; ?>>
-                                Still employed</option>
-                            <option value="0"
-                                <?php echo ($operation == "edit" && $staff && isset($staff['staff_status']) && $staff['staff_status'] == '0') ? 'selected' : ''; ?>>
-                                No longer employed</option>
+                            ?>
                         </select>
-                        <div class="invalid-feedback">Please select the staff status.</div>
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="form-group">
+                        <label class="form-label">Work Location</label>
+                        <input type="text" name="work_location" id="work_location" class="form-control"
+                            value="<?php echo ($operation == "edit" && $staff && isset($staff['work_location'])) ? htmlspecialchars($staff['work_location']) : ""; ?>"
+                            placeholder="Enter work location">
                     </div>
                 </div>
             </div>
-        </div>
-        <?php else: ?>
-        <div class="row">
-            <div class="col-sm-6">
-                <div class="form-group">
-                    <label class="form-label">Staff Code</label>
-                    <input type="text" class="form-control" value="Auto-generated from company name" readonly>
-                    <small class="text-muted">Staff code will be auto-generated based on company name</small>
+
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="form-label">Work E-mail Address</label>
+                        <input type="email" name="work_email" id="work_email" class="form-control"
+                            value="<?php echo ($operation == "edit" && $staff && isset($staff['work_email'])) ? htmlspecialchars($staff['work_email']) : ""; ?>"
+                            placeholder="Enter work email">
+                    </div>
                 </div>
-            </div>
-            <div class="col-sm-6">
-                <div class="form-group">
-                    <label class="form-label" style="display:block !important">Staff Status<span
-                            class="asterik">*</span></label>
-                    <div class="input-group">
-                        <select class="form-select" name="staff_status" id="staff_status" required>
-                            <option value="">:: SELECT STATUS ::</option>
-                            <option value="1" selected>Still employed</option>
-                            <option value="0">No longer employed</option>
-                        </select>
-                        <div class="invalid-feedback">Please select the staff status.</div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="form-label">Work Phone</label>
+                        <input type="text" name="work_phone" id="work_phone" class="form-control"
+                            value="<?php echo ($operation == "edit" && $staff && isset($staff['work_phone'])) ? htmlspecialchars($staff['work_phone']) : ""; ?>"
+                            placeholder="(         )">
                     </div>
                 </div>
             </div>
-        </div>
-        <?php endif; ?>
 
-        <div class="row">
-            
-        </div>
-
-        <div class="row">
-            <div class="col-sm-12">
-                <div class="form-group">
-                    <label class="form-label">Staff Description</label>
-                    <textarea name="staff_description" class="form-control" rows="3"
-                        placeholder="Enter staff description (optional)"><?php echo ($operation == "edit" && $staff && isset($staff['staff_description'])) ? htmlspecialchars($staff['staff_description']) : ""; ?></textarea>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="form-label">Work Cell Phone</label>
+                        <input type="text" name="work_cell_phone" id="work_cell_phone" class="form-control"
+                            value="<?php echo ($operation == "edit" && $staff && isset($staff['work_cell_phone'])) ? htmlspecialchars($staff['work_cell_phone']) : ""; ?>"
+                            placeholder="(         )">
+                    </div>
                 </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="form-label">Start Date</label>
+                        <input type="date" name="start_date" id="start_date" class="form-control"
+                            value="<?php echo ($operation == "edit" && $staff && isset($staff['start_date'])) ? htmlspecialchars($staff['start_date']) : ""; ?>">
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="form-label">Salary</label>
+                        <input type="text" name="salary" id="salary" class="form-control"
+                            value="<?php echo ($operation == "edit" && $staff && isset($staff['salary'])) ? htmlspecialchars($staff['salary']) : ""; ?>"
+                            placeholder="Enter salary">
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between mt-3">
+                <button type="button" class="btn btn-secondary" id="prevBtn2">Previous</button>
+                <button type="button" class="btn btn-primary" id="nextBtn2">Next</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Emergency Contact -->
+        <div class="form-step d-none" id="step-3">
+            <h5>Emergency Contact Information</h5>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="form-label">Emergency Contact Full Name</label>
+                        <input type="text" name="emergency_full_name" id="emergency_full_name" class="form-control"
+                            value="<?php echo ($operation == "edit" && $staff && isset($staff['emergency_full_name'])) ? htmlspecialchars($staff['emergency_full_name']) : ""; ?>"
+                            placeholder="Enter emergency contact full name">
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="form-label">Emergency Contact Address</label>
+                        <input type="text" name="emergency_address" id="emergency_address" class="form-control"
+                            value="<?php echo ($operation == "edit" && $staff && isset($staff['emergency_address'])) ? htmlspecialchars($staff['emergency_address']) : ""; ?>"
+                            placeholder="Enter emergency contact address">
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-4">
+                    <div class="form-group">
+                        <label class="form-label">Primary Phone</label>
+                        <input type="text" name="emergency_primary_phone" id="emergency_primary_phone" class="form-control"
+                            value="<?php echo ($operation == "edit" && $staff && isset($staff['emergency_primary_phone'])) ? htmlspecialchars($staff['emergency_primary_phone']) : ""; ?>"
+                            placeholder="(         )">
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="form-group">
+                        <label class="form-label">Emergency Cell Phone</label>
+                        <input type="text" name="emergency_cell_phone" id="emergency_cell_phone" class="form-control"
+                            value="<?php echo ($operation == "edit" && $staff && isset($staff['emergency_cell_phone'])) ? htmlspecialchars($staff['emergency_cell_phone']) : ""; ?>"
+                            placeholder="(         )">
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="form-group">
+                        <label class="form-label">Relationship</label>
+                        <input type="text" name="emergency_relationship" id="emergency_relationship" class="form-control"
+                            value="<?php echo ($operation == "edit" && $staff && isset($staff['emergency_relationship'])) ? htmlspecialchars($staff['emergency_relationship']) : ""; ?>"
+                            placeholder="Enter relationship">
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between mt-3">
+                <button type="button" class="btn btn-secondary" id="prevBtn3">Previous</button>
+                <button type="button" id="save_facility" class="btn btn-success" onclick="saveRecord()">
+                    <?php echo ($operation == "edit") ? "Update Staff" : "Create Staff"; ?>
+                </button>
             </div>
         </div>
 
@@ -220,11 +343,7 @@ else
                 <div id="server_mssg"></div>
             </div>
         </div>
-
         <?php include("form-footer.php"); ?>
-        <button type="button" id="save_facility" class="btn btn-primary" onclick="saveRecord()">
-            <?php echo ($operation == "edit") ? "Update Staff" : "Create Staff"; ?>
-        </button>
     </form>
 </div>
 
@@ -243,7 +362,74 @@ else
                 $(this).removeClass('is-invalid');
             }
         });
+
+        // Navigation between form steps
+        $('#nextBtn1').click(function () {
+            // Validate step 1
+            var valid = true;
+            $('#step-1 [required]').each(function () {
+                if (!$(this).val().trim()) {
+                    $(this).addClass('is-invalid');
+                    valid = false;
+                } else {
+                    $(this).removeClass('is-invalid');
+                }
+            });
+
+            if (!valid) {
+                showMessage("Please fill all required fields in Step 1.", "error");
+                return;
+            }
+
+            // Show step 2
+            $('#step-1').addClass('d-none');
+            $('#step-2').removeClass('d-none');
+            updateProgressBar(66, "Step 2 of 3");
+        });
+
+        $('#prevBtn2').click(function () {
+            // Show step 1
+            $('#step-2').addClass('d-none');
+            $('#step-1').removeClass('d-none');
+            updateProgressBar(33, "Step 1 of 3");
+        });
+
+        $('#nextBtn2').click(function () {
+            // Validate step 2
+            var valid = true;
+            $('#step-2 [required]').each(function () {
+                if (!$(this).val().trim()) {
+                    $(this).addClass('is-invalid');
+                    valid = false;
+                } else {
+                    $(this).removeClass('is-invalid');
+                }
+            });
+
+            if (!valid) {
+                showMessage("Please fill all required fields in Step 2.", "error");
+                return;
+            }
+
+            // Show step 3
+            $('#step-2').addClass('d-none');
+            $('#step-3').removeClass('d-none');
+            updateProgressBar(100, "Step 3 of 3");
+        });
+
+        $('#prevBtn3').click(function () {
+            // Show step 2
+            $('#step-3').addClass('d-none');
+            $('#step-2').removeClass('d-none');
+            updateProgressBar(66, "Step 2 of 3");
+        });
     });
+
+    function updateProgressBar(percentage, stepText) {
+        var progressBar = $('#formProgressBar');
+        progressBar.css('width', percentage + '%').attr('aria-valuenow', percentage);
+        progressBar.text(stepText);
+    }
 
     function showMessage(message, type) {
         $("#server_mssg").html('<div class="alert alert-' + (type === 'success' ? 'success' : 'danger') +
@@ -284,17 +470,12 @@ else
             return;
         }
 
-        // Additional validation for staff name
-        var staffFirstName = $("#staff_first_name").val().trim();
-        var staffLastName = $("#staff_last_name").val().trim();
-        if (staffFirstName.length < 2) {
-            showMessage("Staff first name must be at least 2 characters long.", "error");
-            $("#staff_first_name").focus();
-            return;
-        }
-        if (staffLastName.length < 2) {
-            showMessage("Staff last name must be at least 2 characters long.", "error");
-            $("#staff_last_name").focus();
+       
+        // Additional validation for full name
+        var fullName = $("#full_name").val().trim();
+        if (fullName.length < 2) {
+            showMessage("Full name must be at least 2 characters long.", "error");
+            $("#full_name").focus();
             return;
         }
 

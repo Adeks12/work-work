@@ -11,14 +11,14 @@ class Staff extends dbobject
         $primary_key   = "staff_id";
         $columner = array(
             array( 'db' => 'staff_id', 'dt' => 0 ),
-            array( 'db' => 'staff_first_name', 'dt' => 1 ),
-            array( 'db' => 'staff_last_name', 'dt' => 2 ),
-            array( 'db' => 'staff_code', 'dt' => 3 ),
-            array( 'db' => 'staff_email', 'dt' => 4 ),
-            array( 'db' => 'staff_phone_no', 'dt' => 5 ),
-            array( 'db' => 'depmt_name', 'dt' => 6 ), // Add this line (adjust dt as needed)
+            array( 'db' => 'full_name', 'dt' => 1 ),
+            array( 'db' => 'staff_code', 'dt' => 2 ),
+            array( 'db' => 'personal_email', 'dt' => 3 ),
+            array( 'db' => 'cell_phone', 'dt' => 4 ),
+            array( 'db' => 'job_title', 'dt' => 5 ),
+            array( 'db' => 'start_date', 'dt' => 6 ), // Add this line (adjust dt as needed)
             array( 
-                'db' => 'staff_status', 
+                'db' => 'status', 
                 'dt' => 7,
                 'formatter' => function( $d, $row ) {
                     return $d == '1' ? '<span class="badge bg-success">Still employed</span>' : '<span class="badge bg-danger">No longer employed</span>';
@@ -28,11 +28,13 @@ class Staff extends dbobject
             array( 
                 'db' => 'staff_id', 
                 'dt' => 9,
-                'formatter' => function( $d, $row ) {
+                'formatter' => function($d, $row) {
                     return '<div class="d-flex gap-1">
-                                <button class="btn btn-sm btn-primary" onclick="editstaff('.$d.')">Edit</button>
-                                <button class="btn btn-sm btn-danger" onclick="deletestaff('.$d.')">Delete</button>
-                            </div>';
+                        <button class="btn btn-sm btn-outline-primary" onclick="editstaff('.$d.')">Edit<br><i class="fas fa-pencil"></i></button>
+                        <button class="btn btn-sm btn-outline-info" onclick="viewstaff('.$d.')">View<br><i class="fas fa-eye"></i></button>
+                        <button class="btn btn-sm btn-outline-warning" onclick="sackstaff('.$d.')">Sack<br><i class="fas fa-user-slash"></i></button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deletestaff('.$d.')">Delete<br><i class="fas fa-trash"></i></button>
+                    </div>';
                 }
             )
         );
@@ -72,32 +74,34 @@ class Staff extends dbobject
 
     public function createStaff($data)
     {
+        
         try {
+            $data['status'] = '1'; // Default status to '1' (active)
             $data['created_at'] = date("Y-m-d H:i:s");
             $data['created_officer'] = $_SESSION['username_sess'];
 
             // Auto-generate staff code
             if($data['operation'] == 'new') {
-                $data['staff_code'] = $this->generateStaffCode($data['staff_first_name'], $data['merchant_id']);
+                $data['staff_code'] = $this->generateStaffCode($data['full_name'], $data['merchant_id']);
             }
 
             // Validation rules
             $validation = $this->validate($data,
                 array(
-                    'staff_first_name' => 'required',
-                    'staff_last_name' => 'required',
-                    'staff_email' => 'required',
-                    'staff_phone_no' => 'required',
-                    'staff_status' => 'required',
-                    'depmt_id' => 'required' 
+                    'full_name' => 'required',
+                    'address' => 'required',
+                    'cell_phone' => 'required',
+                    'personal_email' => 'required',
+                    'marital_status' => 'required',
+                    'start_date' => 'required',
                 ),
                 array(
-                    'staff_first_name' => 'First Name',
-                    'staff_last_name' => 'Last Name',
-                    'staff_email' => 'Email',
-                    'staff_phone_no' => 'Phone Number',
-                    'staff_status' => 'Status',
-                    'depmt_id' => 'Department' 
+                    'full_name' => 'Full Name',
+                    'address' => 'Address',
+                    'cell_phone' => 'Phone Number',
+                    'personal_email' => 'Email Address',
+                    'marital_status' => 'Marital Status',
+                    'start_date' => 'Start Date',
                 )
             ); // <-- Add this line
 
@@ -106,7 +110,7 @@ class Staff extends dbobject
                 if($data['operation'] == 'new')
                 {
                     // Check for duplicate staff email within same merchant
-                    $checkEmail = $this->db_query("SELECT staff_id FROM staff WHERE staff_email = '{$data['staff_email']}' AND merchant_id = '{$data['merchant_id']}'", true);
+                    $checkEmail = $this->db_query("SELECT staff_id FROM staff WHERE personal_email = '{$data['personal_email']}' AND merchant_id = '{$data['merchant_id']}'", true);
                     if($checkEmail && count($checkEmail) > 0) {
                         return json_encode(array("response_code" => 22, "response_message" => "Staff email already exists"));
                     }
@@ -129,7 +133,7 @@ class Staff extends dbobject
                 elseif($data['operation'] == 'edit')
                 {
                     // Check for duplicate staff email within same merchant (excluding current record)
-                    $checkEmail = $this->db_query("SELECT staff_id FROM staff WHERE staff_email = '{$data['staff_email']}' AND merchant_id = '{$data['merchant_id']}' AND staff_id != '{$data['staff_id']}'", true);
+                    $checkEmail = $this->db_query("SELECT staff_id FROM staff WHERE personal_email = '{$data['personal_email']}' AND merchant_id = '{$data['merchant_id']}' AND staff_id != '{$data['staff_id']}'", true);
                     if($checkEmail && count($checkEmail) > 0) {
                         return json_encode(array("response_code" => 22, "response_message" => "Staff email already exists"));
                     }
@@ -201,6 +205,8 @@ class Staff extends dbobject
 
             $sql = "DELETE FROM staff WHERE staff_id = '$staff_id' AND merchant_id = '$merchant_id'";
             $result = $this->db_query($sql, false);
+            $sql1 = "UPDATE department SET depmt_head = NULL WHERE depmt_head = '$staff_id' AND merchant_id = '$merchant_id'";
+            $result1 = $this->db_query($sql1, false);
 
             if($result) {
                 return json_encode(array("response_code" => 0, "response_message" => "staff deleted successfully"));
@@ -229,6 +235,21 @@ class Staff extends dbobject
         {
             error_log("Get All staffs Error: " . $e->getMessage());
             return json_encode(array("response_code" => 500, "response_message" => "An error occurred while fetching staffs"));
+        }
+    }
+
+    public function sackStaff($data)
+    {
+        $staff_id = $data['staff_id'];
+        $merchant_id = $_SESSION['merchant_id'] ?? $data['merchant_id'];
+        $sql = "UPDATE staff SET status = '0' WHERE staff_id = '$staff_id' AND merchant_id = '$merchant_id'";
+        $result = $this->db_query($sql, false);
+        $sql1 ="UPDATE department SET depmt_head = NULL WHERE depmt_head = '$staff_id' AND merchant_id = '$merchant_id'";
+        $result1 = $this->db_query($sql1, false);
+        if ($result) {
+            return json_encode(array("response_code" => 0, "response_message" => "Staff contract terminated successfully."));
+        } else {
+            return json_encode(array("response_code" => 81, "response_message" => "Failed to terminate staff contract."));
         }
     }
 }

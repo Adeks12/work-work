@@ -13,7 +13,12 @@ class Department extends dbobject
             array( 'db' => 'depmt_id', 'dt' => 0 ),
             array( 'db' => 'depmt_name', 'dt' => 1 ),
             array( 'db' => 'depmt_code', 'dt' => 2 ),
-            array( 'db' => 'depmt_head', 'dt' => 3 ),
+            array( 'db' => 'depmt_head', 
+                'dt' => 3,
+                'formatter' => function($d, $row) {
+                $fullname = $this->getitemlabel('staff', 'staff_id', $row['depmt_head'], 'full_name');
+                return $fullname;
+                } ),
             array( 
                 'db' => 'depmt_status', 
                 'dt' => 4,
@@ -26,10 +31,15 @@ class Department extends dbobject
                 'db' => 'depmt_id', 
                 'dt' => 6,
                 'formatter' => function( $d, $row ) {
-                    return '<div class="d-flex gap-1">
-                        <button class="btn btn-sm btn-primary" onclick="editDepartment('.$d.')">Edit</button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteDepartment('.$d.')">Delete</button>
-                    </div>';
+                    $removeHeadBtn = '';
+                    if (!empty($row['depmt_head'])) {
+                        $removeHeadBtn = '<button class="btn btn-sm btn-outline-warning" onclick="removeDepartmentHead('.$d.', \''.$row['depmt_head'].'\')">Remove Head<br><i class=\'fas fa-user-slash\'></i></button>';
+                    }
+                    return '<div class="d-flex gap-1">'
+                        .'<button class="btn btn-sm btn-outline-primary" onclick="editDepartment('.$d.')">Edit<br><i class="fas fa-pencil"></i></button>'
+                        .'<button class="btn btn-sm btn-outline-danger" onclick="deleteDepartment('.$d.')">Delete<br><i class="fas fa-trash"></i></button>'
+                        .$removeHeadBtn
+                    .'</div>';
                 }
             )
         );
@@ -44,16 +54,16 @@ class Department extends dbobject
 
     private function generateDepartmentCode($departmentName, $merchantId) {
         // Get first 3 letters of department name, convert to uppercase
-        $prefix = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $departmentName), 0, 3));
+        // $prefix = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $departmentName), 0, 3));
         
         // If department name has less than 3 letters, pad with 'X'
-        $prefix = str_pad($prefix, 3, 'X');
+        // $prefix = str_pad($prefix, 3, 'X');
         
         // Generate unique code
         do {
             $randomNumber = str_pad(rand(0, 999), 3, '0', STR_PAD_LEFT);
-            $code = $prefix . $randomNumber;
-            
+            $code = 'DEP' . $randomNumber;
+        
             // Check if this code already exists for this merchant
             $checkCode = $this->db_query("SELECT depmt_id FROM department WHERE depmt_code = '$code' AND merchant_id = '$merchantId'", true);
         } while ($checkCode && count($checkCode) > 0);
@@ -69,19 +79,21 @@ class Department extends dbobject
             
             // Auto-generate department code
             if($data['operation'] == 'new') {
+                if(!$data['depmt_code']){
                 $data['depmt_code'] = $this->generateDepartmentCode($data['depmt_name'], $data['merchant_id']);
+                }
             }
             
             // Validation rules - removed depmt_code from required fields
             $validation = $this->validate($data,
                 array(
                     'depmt_name' => 'required',
-                    'depmt_head' => 'required',
+                    'depmt_code' => 'optional', // Code is auto-generated, not required
                     'depmt_status' => 'required'
                 ),
                 array(
                     'depmt_name' => 'Department Name',
-                    'depmt_head' => 'Department Head', 
+                    'depmt_code' => 'Department Code',
                     'depmt_status' => 'Department Status'
                 )
             );
@@ -216,4 +228,83 @@ class Department extends dbobject
             return json_encode(array("response_code" => 500, "response_message" => "An error occurred while fetching departments"));
         }
     }
+
+    public function removeDepartmentHead($data)
+    {
+                
+        try {
+            $department_id = $data['depmt_id'] ?? $data['department_id'];
+            $merchant_id = $_SESSION['merchant_id'] ?? $data['merchant_id'];
+            $department_head = $data['depmt_head'] ?? $data['depmt_head'];
+
+            
+
+            // Update department head to NULL
+            $sql = "UPDATE department SET depmt_head = NULL WHERE depmt_id = '$department_id' AND merchant_id = '$merchant_id'";
+            $result = $this->db_query($sql, false);
+
+            $query = "COUNT(*) as count FROM department WHERE depmt_head = '$department_head' AND merchant_id = '$merchant_id'";
+            $checkHead = $this->db_query("SELECT $query", true);
+
+            if (!$checkHead || count($checkHead) == 0 || $checkHead[0]['count'] == 0) {
+             $sql1 = "UPDATE staff SET depmt_head = '0' WHERE staff_id = '$department_head' AND merchant_id = '$merchant_id'";            
+             $result1 = $this->db_query($sql1, false);
+            }           
+
+            if($result) {
+                return json_encode(array("response_code" => 0, "response_message" => "Department head removed successfully"));
+            } else {
+                return json_encode(array("response_code" => 81, "response_message" => "Failed to remove department head"));
+            }
+        }
+        catch(Exception $e)
+        {
+            error_log("Remove Department Head Error: " . $e->getMessage());
+            return json_encode(array("response_code" => 500, "response_message" => "An error occurred while removing department head"));
+        }
+    }
+
+    public function assignDepartmentHead($data)
+    {
+        try {
+            $staff_id = $data['staff_id'] ?? $data['staff_id'];
+            $department_id = $data['depmt_id'] ?? $data['department_id'];
+            $head_id = $data['depmt_id'] ?? $data['depmt_id'];
+            $merchant_id = $_SESSION['merchant_id'] ?? $data['merchant_id'];
+
+            // Validate inputs
+            if(empty($department_id) || empty($head_id)) {
+                return json_encode(array("response_code" => 20, "response_message" => "Department ID and Head ID are required"));
+            }
+
+            // Check if department exists
+            $checkDept = $this->db_query("SELECT depmt_id FROM department WHERE depmt_id = '$department_id' AND merchant_id = '$merchant_id'", true);
+            if(!$checkDept || count($checkDept) == 0) {
+                return json_encode(array("response_code" => 404, "response_message" => "Department not found"));
+            }
+
+            // Check if head exists
+            $checkHead = $this->db_query("SELECT staff_id FROM staff WHERE merchant_id = '$merchant_id'", true);
+            if(!$checkHead || count($checkHead) == 0) {
+                return json_encode(array("response_code" => 404, "response_message" => " Department Staff not found"));
+            }
+
+            // Update department head
+            $sql = "UPDATE department SET depmt_head = '$staff_id' WHERE depmt_id = '$department_id' AND merchant_id = '$merchant_id'";
+            $sql1 = "UPDATE staff SET depmt_head = '1' WHERE staff_id = '$staff_id' AND merchant_id = '$merchant_id'";
+            $result = $this->db_query($sql, false);
+            $result1 = $this->db_query($sql1, false);
+
+            if($result) {
+                return json_encode(array("response_code" => 0, "response_message" => "Department head assigned successfully"));
+            } else {
+                return json_encode(array("response_code" => 82, "response_message" => "Failed to assign department head"));
+            }
+        }
+        catch(Exception $e)
+        {
+            error_log("Assign Department Head Error: " . $e->getMessage());
+            return json_encode(array("response_code" => 500, "response_message" => "An error occurred while assigning department head"));
+        }
+    }   
 }

@@ -5,9 +5,9 @@
             <h6 class="card-subtitle text-muted">The report contains Staff that have been setup in the system.</h6>
         </div>
         <div class="card-body">
-            <a class="btn btn-warning mb-3" onclick="loadModal('setup/staff_setup.php','modal_div')"
+            <a class="btn btn-outline-warning mb-3" onclick="loadModal('setup/staff_setup.php','modal_div')"
                 href="javascript:void(0)" data-toggle="modal" data-target="#defaultModalPrimary">
-                <i class="fas fa-plus"></i> Create Staff
+                 Create Staff
             </a>
 
             <div class="row">
@@ -24,11 +24,11 @@
                                         <tr>
                                             <th>ID</th>
                                             <th>First Name</th>
-                                            <th>Last Name</th>
                                             <th>Staff Code</th>
-                                            <th>Email</th>
+                                            <th>Personal Email</th>
                                             <th>Phone Number</th>
-                                            <th>Department</th>
+                                            <th>Job Title</th>
+                                            <th>Start Date</th>
                                             <th>Status</th>
                                             <th>Created Date</th>
                                             <th>Actions</th>
@@ -103,8 +103,31 @@
         }
     }
 
+    function sackstaff(staffId) {
+        if (confirm('Are you sure you want to terminate this staff\'s contract? This will mark them as no longer employed.')) {
+            $.post('utilities.php', {
+                op: 'staff.sackStaff',
+                staff_id: staffId
+            }, function (response) {
+                if (response.response_code == 0) {
+                    alert('Staff contract terminated.');
+                    refreshStaffList();
+                } else {
+                    alert('Error: ' + response.response_message);
+                }
+            }, 'json').fail(function () {
+                alert('An error occurred while terminating the staff.');
+            });
+        }
+    }
+
     function refreshStaffList() {
         $('#datatables-staffs').DataTable().ajax.reload();
+    }
+
+    function viewstaff(staffId) {
+        loadModal('view/staff_view.php?staff_id=' + staffId, 'modal_div');
+        $('#defaultModalPrimary').modal('show');
     }
 
     // Global function to refresh table after modal operations

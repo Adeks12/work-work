@@ -121,8 +121,7 @@
 
 
    <?php
-    session_start();
-
+    
     include_once("libs/dbfunctions.php");
     $dbobject = new dbobject();
 
@@ -147,11 +146,11 @@
 
         $sql = "SELECT DISTINCT(State) as state,stateid FROM lga order by State";
         $states = $dbobject->db_query($sql);
-        $state_id = $_POST['state_id'];
+        $state_id = isset($_POST['state_id']) ? $_POST['state_id'] : '';
     }
     ?>
 
-    <div class="container-fluid py-5">
+    <div class="container-fluid py-6">
         <div class="row justify-content-center">
             <div class="col-12 col-lg-12 col-xl-12">
                 <div class="form-container p-4 p-md-5">
@@ -639,9 +638,12 @@
                             showConfirmButton: false
                         });
 
-                        setTimeout(() => {
-                            window.location = response.data.redirect || 'home.php';
-                        }, 3000);
+                        // Set session registration_completed to 1 before redirect
+                        $.get('set_registration_complete.php', function() {
+                            setTimeout(() => {
+                                window.location = response.data.redirect || 'home.php';
+                            }, 3000);
+                        });
                     } else {
                         Swal.fire({
                             icon: 'error',

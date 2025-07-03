@@ -6,9 +6,14 @@
             </h6>
         </div>
         <div class="card-body">
-            <a class="btn btn-warning mb-3" onclick="loadModal('setup/department_setup.php','modal_div')"
+            <a class="btn btn-outline-warning mb-3" onclick="loadModal('setup/department_setup.php','modal_div')"
                 href="javascript:void(0)" data-toggle="modal" data-target="#defaultModalPrimary">
-                <i class="fas fa-plus"></i> Create Department
+                 Create Department
+            </a>
+
+            <a class="btn btn-warning mb-3" onclick="loadModal('setup/departmentHead_setup.php','modal_div')"
+                href="javascript:void(0)" data-toggle="modal" data-target="#defaultModalPrimary">
+                 Assign Department Head
             </a>
 
             <div class="row">
@@ -161,6 +166,25 @@
 
     function refreshDepartmentList() {
         $('#datatables-departments').DataTable().ajax.reload();
+    }
+
+    function removeDepartmentHead(depmtId, depmtHead) {
+        if (confirm('Are you sure you want to remove the department head?')) {
+            $.post('utilities.php', {
+                op: 'Department.removeDepartmentHead',
+                depmt_id: depmtId,
+                depmt_head: depmtHead
+            }, function (re) {
+                if (re.response_code == 0) {
+                    alert('Department head removed successfully.');
+                    refreshDepartmentList();
+                } else {
+                    alert('Failed to remove department head: ' + re.response_message);
+                }
+            }, 'json').fail(function () {
+                alert('An error occurred while removing the department head.');
+            });
+        }
     }
 
     // Global function to refresh table after modal operations

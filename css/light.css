@@ -34813,3 +34813,7 @@ input[type=reset].btn-block,
 input[type=submit].btn-block {
     width: 100%
 }
+
+.form-control input, .form-control select, .form-control textarea, .form-select select  {
+    border-color:grey important;
+}

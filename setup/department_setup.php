@@ -11,6 +11,10 @@ if(isset($_REQUEST['op']) && $_REQUEST['op'] == 'edit')
 {
     // Fixed: Use consistent parameter name and add debugging
     $department_id = $_REQUEST['depmt_id'] ?? $_REQUEST['department_id'] ?? '';
+    $sqlhead = ("SELECT depmt_head FROM department WHERE depmt_id = '$department_id' ");
+    $department_sqlrun = $dbobject->db_query($sqlhead, true);
+    $department_head = $department_sqlrun[0]['depmt_head'] ?? '';
+    
     
     // Debug: Add error checking
     if(empty($department_id)) {
@@ -73,6 +77,7 @@ else
         <input type="hidden" name="merchant_id" id="merchant_id" value="<?php echo $merchant_id; ?>">
         <?php if($operation == "edit"): ?>
         <input type="hidden" name="depmt_id" value="<?php echo $department_id; ?>">
+        
         <?php endif; ?>
 
         <div class="row">
@@ -83,30 +88,22 @@ else
                         value="<?php echo ($operation == "edit" && $dept && isset($dept['depmt_name'])) ? htmlspecialchars($dept['depmt_name']) : ""; ?>"
                         placeholder="Enter department name" autocomplete="off" required>
                     <div class="invalid-feedback">Please enter the department name.</div>
+                    
                 </div>
             </div>
-            <div class="col-sm-6">
-                <div class="form-group">
-                    <label class="form-label">Department Head<span class="asterik">*</span></label>
-                    <input type="text" name="depmt_head" id="depmt_head"
-                        value="<?php echo ($operation == "edit" && $dept && isset($dept['depmt_head'])) ? htmlspecialchars($dept['depmt_head']) : "" ?>"
-                        class="form-control" placeholder="Enter department head name" autocomplete="off" required>
-                    <div class="invalid-feedback">Please enter the department head name.</div>
-                </div>
-            </div>
-        </div>
-
-        <?php if($operation == "edit"): ?>
-        <div class="row">
             <div class="col-sm-6">
                 <div class="form-group">
                     <label class="form-label">Department Code</label>
-                    <input type="text" name="depmt_code" class="form-control"
-                        value="<?php echo ($dept && isset($dept['depmt_code'])) ? htmlspecialchars($dept['depmt_code']) : ""; ?>"
-                        placeholder="Auto-generated" readonly>
-                    <small class="text-muted">Department code is auto-generated and cannot be changed</small>
+                    <input type="text" name="depmt_code" class="form-control" id="depmt_code"
+                        value="<?php echo ($operation == "edit" && $dept && isset($dept['depmt_code'])) ? htmlspecialchars($dept['depmt_code']) : ""; ?>"
+                        placeholder="Enter Department Code"> 
+                    <small class="asterik">Department code is auto-generated if this field is empty</small>
                 </div>
             </div>
+            
+
+        <?php if($operation == "edit"): ?>
+        <div class="row">
             <div class="col-sm-6">
                 <div class="form-group">
                     <label class="form-label" style="display:block !important">Department Status<span
@@ -128,13 +125,6 @@ else
         </div>
         <?php else: ?>
         <div class="row">
-            <div class="col-sm-6">
-                <div class="form-group">
-                    <label class="form-label">Department Code</label>
-                    <input type="text" class="form-control" value="Auto-generated from department name" readonly>
-                    <small class="text-muted">Department code will be auto-generated based on department name</small>
-                </div>
-            </div>
             <div class="col-sm-6">
                 <div class="form-group">
                     <label class="form-label" style="display:block !important">Department Status<span
@@ -161,6 +151,8 @@ else
                 </div>
             </div>
         </div>
+
+      
 
         <div class="row">
             <div class="col-sm-12">
@@ -190,6 +182,8 @@ else
                 $(this).removeClass('is-invalid');
             }
         });
+
+        
     });
 
     function showMessage(message, type) {
