@@ -146,7 +146,12 @@
 
         $sql = "SELECT DISTINCT(State) as state,stateid FROM lga order by State";
         $states = $dbobject->db_query($sql);
-        $state_id = isset($_POST['state_id']) ? $_POST['state_id'] : '';
+        $state_id = isset($_POST['state_id']) ? $_POST['state_id'] : '';#
+
+        $sql1 = "SELECT email FROM userdata WHERE username = '$username' LIMIT 1";
+        $result1 = $dbobject->db_query($sql1);
+        $email = isset($result1[0]['email']) ? $result1[0]['email'] : '';
+
     }
     ?>
 
@@ -189,7 +194,7 @@
                                 <div class="col-md-6">
                                     <label class="form-label fw-medium">Email</label>
                                     <input type="email" class="form-control" placeholder="Email" required
-                                        id="merchant_email" name="merchant_email" />
+                                        id="merchant_email" name="merchant_email" value="<?= $email ?>" readonly/>
                                 </div>
 
                                 <div class="col-md-6">

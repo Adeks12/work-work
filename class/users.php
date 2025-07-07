@@ -650,13 +650,13 @@ class Users extends dbobject
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port = 587;
 
-        $mail->setFrom('Jesuslovestestimony@gmail.com', 'The Lord\'s Chosen');
+        $mail->setFrom('Jesuslovestestimony@gmail.com', 'Inventory Management System');
         if (!$mail->addAddress($email)) {
         return ['success' => false, 'message' => 'Invalid email address: ' . $email];
         }
 
         $mail->isHTML(true);
-        $mail->Subject = 'Your Verification Code - The Lord\'s Chosen';
+        $mail->Subject = 'Your Verification Code - Inventory Management System';
         $mail->Body = "Dear " . htmlspecialchars( $email) . ",<br><br>" .
         "Thank you for registering with us.<br><br>" .
         "<strong>Your verification code is: <span style='font-size: 18px;'>{$verification_code}</span></strong><br><br>"

@@ -1,48 +1,49 @@
 <div class="container-fluid p-0">
     <div class="card">
         <div class="card-header">
-            <h5 class="card-title">Department Management</h5>
+            <h5 class="text-danger">Department Management</h5>
             <h6 class="card-subtitle text-muted">The report contains Departments that have been setup in the system.
             </h6>
         </div>
+    </div>
+    
+    <div class="card">
         <div class="card-body">
             <a class="btn btn-outline-warning mb-3" onclick="loadModal('setup/department_setup.php','modal_div')"
                 href="javascript:void(0)" data-toggle="modal" data-target="#defaultModalPrimary">
                  Create Department
             </a>
 
-            <a class="btn btn-warning mb-3" onclick="loadModal('setup/departmentHead_setup.php','modal_div')"
+            <a class="btn btn-outline-warning mb-3" onclick="loadModal('setup/departmentHead_setup.php','modal_div')"
                 href="javascript:void(0)" data-toggle="modal" data-target="#defaultModalPrimary">
                  Assign Department Head
             </a>
 
-            <div class="row">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title">Departments List</h5>
-                            <h6 class="card-subtitle text-muted">Manage your organization's departments</h6>
-                        </div>
-                        <div class="card-body">
-                           
-
-                            <table id="datatables-departments" class="table table-striped w-100">
-                                <thead>
-                                    <tr>
-                                        <th>S/N</th>
-                                        <th>Department Name</th>
-                                        <th>Department Code</th>
-                                        <th>Department Head</th>
-                                        <th>Status</th>
-                                        <th>Created Date</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                </tbody>
-                            </table>
-                        </div>
+                <div class="row">
+                     <div class="col-12">
+                        
+               
+                            <div class="card-body">
+                                <div style="col-sm-12 table-responsive">
+                                    <table id="datatables-departments" class="table table-striped table-bordered w-100">
+                                        <thead>
+                                            <tr>
+                                                <th>S/N</th>
+                                                <th>Department Name</th>
+                                                <th>Department Code</th>
+                                                <th>Department Head</th>
+                                                <th>Status</th>
+                                                <th>Created Date</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                     </div>
+                </div>
                 </div>
             </div>
         </div>
@@ -56,20 +57,15 @@
 
     $(document).ready(function () {
         table = $("#datatables-departments").DataTable({
-            dom: '<"row mb-3 align-items-center"<"col-md-6"f><"col-md-6 text-end"l>>rt<"row mt-2"<"col-12"p>>',
-            processing: true,
+           processing: true,
             columnDefs: [{
                     orderable: false,
                     targets: 0
                 },
-                {
-                    width: "100px",
-                    targets: 6
-                }
+               
             ],
             serverSide: true,
             paging: true,
-            pageLength: 25,
             oLanguage: {
                 sEmptyTable: "No record was found, please try another query",
                 sProcessing: "Loading departments..."
@@ -89,39 +85,9 @@
                 },
                 error: function (xhr, error, thrown) {
                     console.log("DataTable Error:", error, thrown);
-                    alert("Error loading data. Please refresh the page.");
                 }
             },
-            columns: [{
-                    data: 0,
-                    name: 'depmt_id'
-                },
-                {
-                    data: 1,
-                    name: 'depmt_name'
-                },
-                {
-                    data: 2,
-                    name: 'depmt_code'
-                },
-                {
-                    data: 3,
-                    name: 'depmt_head'
-                },
-                {
-                    data: 4,
-                    name: 'depmt_status'
-                },
-                {
-                    data: 5,
-                    name: 'created_at'
-                },
-                {
-                    data: 6,
-                    name: 'actions',
-                    orderable: false
-                }
-            ]
+           
         });
 
         // Search functionality

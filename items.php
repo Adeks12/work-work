@@ -14,10 +14,17 @@
             <div class="mb-3">
                 <label for="parentCatFilter" class="form-label">Filter by Allocation Status:</label>
                 <select id="parentCatFilter" class="form-select" style="width:auto; display:inline-block;">
-                    <option value="all">All Categories</option>
+                    <option value="all">Filter by Allocation Status</option>
+                    <!-- Main categories will be loaded here by JS -->
+                </select>
+           
+                <label for="parentCatFilter" class="form-label">Filter by Category/ Sub category:</label>
+                <select id="parentCatFilter" class="form-select" style="width:auto; display:inline-block;">
+                    <option value="all">Filter by Category</option>
                     <!-- Main categories will be loaded here by JS -->
                 </select>
             </div>
+
 
             <div class="row">
                 <div class="col-12">
@@ -36,13 +43,20 @@
                                     <div id="itemCatsTable_length" class="dataTables_length"></div>
                                 </div>
                             </div>
-                            <table id="datatables-item-cats" class="table table-striped w-100">
-                                <thead>
+                            <table id="datatables-item-cats" class="table table-striped table-bordered w-100">
+                            <thead>
                                     <tr>
                                         <th>ID</th>
                                         <th>Item Code</th>
-                                        <th>Category Name</th>
+                                        <th>Item Name</th>
+                                        <th>Item Cat Name</th>
+                                        <th>Condition</th>
+                                        <th>Color</th>
+                                        <th>Quantity</th>
                                         <th>Status</th>
+                                        <th>Purchase Date</th>
+                                        <th>warranty </th>
+                                        <th>Location</th>
                                         <th>Created Date</th>
                                         <th>Actions</th>
                                     </tr>
@@ -50,12 +64,7 @@
                                 <tbody>
                                 </tbody>
                             </table>
-                            <!-- Pagination below table, but you can move it if you want -->
-                            <div class="row mt-2">
-                                <div class="col-12">
-                                    <div id="itemCatsTable_paginate" class="dataTables_paginate"></div>
-                                </div>
-                            </div>
+                            
                         </div>
                     </div>
                 </div>
@@ -65,45 +74,18 @@
 </div>
 
 <script>
-    var table;
+   var table;
     var editor;
-    var op = "item_cat.item_catList"; // Operation for DataTable
-
-    $(document).ready(function () {
-        // Add debugging to check if jQuery is loaded
-        console.log('jQuery loaded:', typeof $ !== 'undefined');
-        console.log('Loading item categories...');
-
-        // Load main categories for dropdown
-        $.post('utilities.php', {
-            op: 'item_cat.getAllitem_cats',
-            only_main: 1
-        }, function (resp) {
-            console.log('Main categories response:', resp);
-            if (resp && resp.response_code == 0 && resp.data && Array.isArray(resp.data)) {
-                resp.data.forEach(function (cat) {
-                    $('#parentCatFilter').append(
-                        $('<option>', {
-                            value: cat.id,
-                            text: cat.item_cat_name
-                        })
-                    );
-                });
-            } else {
-                console.error('Failed to load main categories:', resp);
-            }
-        }, 'json').fail(function (xhr, status, error) {
-            console.error('Error loading main categories:', error, xhr.responseText);
-        });
-
-        // Initialize DataTable with dom option for controls above table
+    var op = "items.itemsList";
+    // var username = $("#username").val();
+    // alert(username);
+    $(document).ready(function() {
         table = $("#datatables-item-cats").DataTable({
-            dom: '<"row mb-3 align-items-center"<"col-md-6"f><"col-md-6 text-end"l>>rt<"row mt-2"<"col-12"p>>',
             processing: true,
-            columnDefs: [
-                { orderable: false, targets: 0 },
-                { width: "100px", targets: 3 }
-            ],
+            columnDefs: [{
+                orderable: false,
+                targets: 0
+            }],
             serverSide: true,
             paging: true,
             oLanguage: {
@@ -112,59 +94,37 @@
             ajax: {
                 url: "utilities.php",
                 type: "POST",
-                data: function (d, l) {
+                data: function(d, l) {
                     d.op = op;
                     d.li = Math.random();
-                    d.parent_cat_id = $('#parentCatFilter').val();
-                    return d;
-                },
-                dataSrc: function (json) {
-                    return json.data || [];
+                    // Add any other filters here if needed
                 }
             }
         });
-
-        // On dropdown change, reload table
-        $('#parentCatFilter').on('change', function () {
-            console.log('Filter changed to:', $(this).val());
-            table.ajax.reload();
-        });
     });
 
-    function edititem_cat(itemCatId) {
-        console.log('Editing item category:', itemCatId);
-        loadModal('setup/item_cat_setup.php?op=edit&item_cat_id=' + itemCatId, 'modal_div');
-        $('#defaultModalPrimary').modal('show');
+    function editItem(id) {
+        loadModal('setup/item_setup.php?op=edit&item_id=' + id, 'modal_div');
     }
 
-    function deleteitem_cat(itemCatId) {
-        console.log('Deleting item category:', itemCatId);
-        if (confirm('Are you sure you want to delete this item category? This action cannot be undone.')) {
-            $.post('utilities.php', {
-                op: 'item_cat.deleteitem_cat',
-                item_cat_id: itemCatId
-            }, function (response) {
-                console.log('Delete response:', response);
-                if (response.response_code == 0) {
-                    alert('Item category deleted successfully');
-                    refreshItemCatList();
+    function deleteItem(id) {
+        if (confirm("Are you sure you want to delete this item category?")) {
+            $.post('utilities.php', { op: 'items.deleteItem', item_id: id }, function (resp) {
+                if (resp.response_code == 0) {
+                    alert(resp.response_message);
+                    $('#datatable').DataTable().ajax.reload();
                 } else {
-                    alert('Error: ' + response.response_message);
+                    alert(resp.response_message);
                 }
-            }, 'json').fail(function (xhr, status, error) {
-                console.error('Delete error:', error, xhr.responseText);
-                alert('An error occurred while deleting the item category');
-            });
+            }, 'json');
         }
     }
 
-    function refreshItemCatList() {
-        console.log('Refreshing item category list...');
-        if (table) {
-            table.ajax.reload();
-        }
+    function loadModal(url, target) {
+        $("#" + target).html('<div class="text-center p-5"><i class="fa fa-spinner fa-spin fa-2x"></i> Loading...</div>');
+        $.get(url, function(data) {
+            $("#" + target).html(data);
+            $('#defaultModalPrimary').modal('show');
+        });
     }
-
-    // Global function to refresh table after modal operations
-    window.refreshItemCatList = refreshItemCatList;
 </script>

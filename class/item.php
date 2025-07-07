@@ -48,8 +48,8 @@ class item_cat extends dbobject
             array( 'db' => 'item_cat_id', 'dt' => 5,
             'formatter' => function( $d, $row ) {
             return '<div class="d-flex gap-1">
-                <button class="btn btn-sm btn-primary" onclick="edititem_cat('.$d.')">Edit</button>
-                <button class="btn btn-sm btn-danger" onclick="deleteitem_cat('.$d.')">Delete</button>
+                <button class="btn btn-sm btn-outline-primary" onclick="edititem_cat('.$d.')">Edit<br><i class="fas fa-pencil"></i></button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteitem_cat('.$d.')">Delete<br><i class="fas fa-edit"></i></button>
             </div>';
             }
         ),

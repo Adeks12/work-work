@@ -133,10 +133,7 @@ class Staff extends dbobject
                 elseif($data['operation'] == 'edit')
                 {
                     // Check for duplicate staff email within same merchant (excluding current record)
-                    $checkEmail = $this->db_query("SELECT staff_id FROM staff WHERE personal_email = '{$data['personal_email']}' AND merchant_id = '{$data['merchant_id']}' AND staff_id != '{$data['staff_id']}'", true);
-                    if($checkEmail && count($checkEmail) > 0) {
-                        return json_encode(array("response_code" => 22, "response_message" => "Staff email already exists"));
-                    }
+                   
 
                     $data['updated_at'] = date("Y-m-d H:i:s");
                     $data['updated_officer'] = $_SESSION['username_sess'];
@@ -242,7 +239,7 @@ class Staff extends dbobject
     {
         $staff_id = $data['staff_id'];
         $merchant_id = $_SESSION['merchant_id'] ?? $data['merchant_id'];
-        $sql = "UPDATE staff SET status = '0' WHERE staff_id = '$staff_id' AND merchant_id = '$merchant_id'";
+        $sql = "UPDATE staff SET staff_status = '0' WHERE staff_id = '$staff_id' AND merchant_id = '$merchant_id'";
         $result = $this->db_query($sql, false);
         $sql1 ="UPDATE department SET depmt_head = NULL WHERE depmt_head = '$staff_id' AND merchant_id = '$merchant_id'";
         $result1 = $this->db_query($sql1, false);

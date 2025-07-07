@@ -1,25 +1,25 @@
 <div class="container-fluid p-0">
     <div class="card">
         <div class="card-header">
-            <h5 class="card-title">Staff Management</h5>
+            <h5 class="text-danger">Staff Management</h5>
             <h6 class="card-subtitle text-muted">The report contains Staff that have been setup in the system.</h6>
         </div>
+    </div>
+    <div class="card">
         <div class="card-body">
             <a class="btn btn-outline-warning mb-3" onclick="loadModal('setup/staff_setup.php','modal_div')"
                 href="javascript:void(0)" data-toggle="modal" data-target="#defaultModalPrimary">
                  Create Staff
             </a>
+            
 
             <div class="row">
                 <div class="col-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title">Staff List</h5>
-                            <h6 class="card-subtitle text-muted">Manage your organization's staff</h6>
-                        </div>
+                    
                         <div class="card-body">
-                            <div class="table-responsive">
-                                <table id="datatables-staffs" class="table table-striped w-100">
+                            
+                            <div class="col-sm-12 table-responsive">
+                                <table id="datatables-staffs" class="table table-striped table-bordered" style= "width:100%">
                                     <thead>
                                         <tr>
                                             <th>ID</th>
@@ -39,7 +39,7 @@
                                 </table>
                             </div>
                         </div>
-                    </div>
+                   
                 </div>
             </div>
         </div>
@@ -53,21 +53,16 @@
 
     $(document).ready(function () {
         table = $("#datatables-staffs").DataTable({
-            dom: '<"row mb-3 align-items-center"<"col-md-6"f><"col-md-6 text-end"l>>rt<"row mt-2"<"col-12"p>>',
-            processing: true,
+           processing: true,
             columnDefs: [{
                     orderable: false,
                     targets: 0
-                },
-                {
-                    width: "100px",
-                    targets: 6
-                }
-            ],
+            }],           
             serverSide: true,
             paging: true,
             oLanguage: {
-                sEmptyTable: "No record was found, please try another query"
+                sEmptyTable: "No record was found, please try another query",
+                sProcessing: "Loading staffs..."
             },
             ajax: {
                 url: "utilities.php",
@@ -75,8 +70,20 @@
                 data: function (d, l) {
                     d.op = op;
                     d.li = Math.random();
+                     // Add search parameter if exists
+                    if ($("#searchInput").val()) {
+                        d.search = {
+                            value: $("#searchInput").val()
+                        };
+                    }
+                },
+                 error: function (xhr, error, thrown) {
+                    console.log("DataTable Error:", error, thrown);
+                    alert('An error occurred while loading the staff data. Please try again later.');
                 }
+                
             }
+            
         });
     });
 

@@ -5,7 +5,14 @@
             <h6 class="card-subtitle text-muted">The report contains Item Categories that have been setup in the system.
             </h6>
         </div>
-        <div class="card-body">
+</div>
+        
+
+            <div class="row">
+                
+                <div class="col-12">
+                    <div class="card">
+                       <div class="card-body">
             <a class="btn btn-outline-warning mb-3" onclick="loadModal('setup/item_cat_setup.php','modal_div')"
                 href="javascript:void(0)" data-toggle="modal" data-target="#defaultModalPrimary">
                  Create Item Category
@@ -18,14 +25,6 @@
                     <!-- Main categories will be loaded here by JS -->
                 </select>
             </div>
-
-            <div class="row">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title">Item Category List</h5>
-                            <h6 class="card-subtitle text-muted">Manage your organization's item categories</h6>
-                        </div>
                         <div class="card-body">
                             <!-- Controls Row: Search & Pagination above table -->
                             <div class="row mb-3 align-items-center">
@@ -36,7 +35,8 @@
                                     <div id="itemCatsTable_length" class="dataTables_length"></div>
                                 </div>
                             </div>
-                            <table id="datatables-item-cats" class="table table-striped w-100">
+                             <div class="col-sm-12 table-responsive">
+                            <table id="datatables-item-cats" class="table table-striped table-bordered" style="width:100%">
                                 <thead>
                                     <tr>
                                         <th>ID</th>
@@ -50,12 +50,8 @@
                                 <tbody>
                                 </tbody>
                             </table>
-                            <!-- Pagination below table, but you can move it if you want -->
-                            <div class="row mt-2">
-                                <div class="col-12">
-                                    <div id="itemCatsTable_paginate" class="dataTables_paginate"></div>
-                                </div>
                             </div>
+                           
                         </div>
                     </div>
                 </div>
@@ -70,11 +66,7 @@
     var op = "item_cat.item_catList"; // Operation for DataTable
 
     $(document).ready(function () {
-        // Add debugging to check if jQuery is loaded
-        console.log('jQuery loaded:', typeof $ !== 'undefined');
-        console.log('Loading item categories...');
-
-        // Load main categories for dropdown
+             // Load main categories for dropdown
         $.post('utilities.php', {
             op: 'item_cat.getAllitem_cats',
             only_main: 1
@@ -98,11 +90,10 @@
 
         // Initialize DataTable with dom option for controls above table
         table = $("#datatables-item-cats").DataTable({
-            dom: '<"row mb-3 align-items-center"<"col-md-6"f><"col-md-6 text-end"l>>rt<"row mt-2"<"col-12"p>>',
             processing: true,
             columnDefs: [
                 { orderable: false, targets: 0 },
-                { width: "100px", targets: 3 }
+                
             ],
             serverSide: true,
             paging: true,
@@ -120,6 +111,10 @@
                 },
                 dataSrc: function (json) {
                     return json.data || [];
+                },
+                error: function (xhr, error, thrown) {
+                    console.error('DataTable AJAX error:', error, xhr.responseText);
+                    alert('An error occurred while loading the item categories. Please try again later.');
                 }
             }
         });

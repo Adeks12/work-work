@@ -54,7 +54,7 @@ $result_inventory = $dbobject->db_query($sql_inventory, true);
 $total_new_inventory = isset($result_inventory[0]['cnt']) ? $result_inventory[0]['cnt'] : 0;
 ?>
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="dark" data-layout="fluid" data-sidebar-theme="dark" data-sidebar-position="left" data-sidebar-behavior="compact">
+<html lang="en" data-bs-theme="light" data-layout="fluid" data-sidebar-theme="colored" data-sidebar-position="left" data-sidebar-behavior="sticky">
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -72,9 +72,11 @@ $total_new_inventory = isset($result_inventory[0]['cnt']) ? $result_inventory[0]
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
     
+    
     <!-- Custom CSS -->
     <link class="js-stylesheet" href="css/light.css" rel="stylesheet">
     <link href="css/app.css" rel="stylesheet">
+    <link href="css/jquery.dataTables.min.css" rel="stylesheet">
 
     <!-- Core JS -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
@@ -82,7 +84,7 @@ $total_new_inventory = isset($result_inventory[0]['cnt']) ? $result_inventory[0]
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     
     <!-- Custom JS -->
-    <script src="js/settings.js"></script>
+
 
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-Q3ZYEKLQ68"></script>
@@ -165,12 +167,12 @@ $total_new_inventory = isset($result_inventory[0]['cnt']) ? $result_inventory[0]
     </style>
     
 </head>
-<body data-theme="default" data-layout="fluid" data-sidebar-position="left" data-sidebar-behavior="sticky">
+<body data-theme="color" >
 <div class="wrapper">
     <!-- Sidebar Navigation (Refactored to match your pasted code) -->
     <nav id="sidebar" class="sidebar">
     <div class="sidebar-content js-simplebar">
-        <a class="sidebar-brand bg-dark text-white" href="home.php" style="display: flex; align-items: center; padding: 1rem; border-bottom: 1px solid #222;">
+        <a class="sidebar-brand  text-black" href="home.php" style="display: flex; align-items: center; padding: 1rem; border-bottom: 1px solid #222;">
             <!-- If you have a logo SVG or image, put it here -->
             <!-- <img src="img/icon.png" alt="Logo" width="32" height="32" class="me-2"> -->
             <span class="align-middle me-3" style="font-weight:600;">Inventory Management</span>
@@ -184,78 +186,81 @@ $total_new_inventory = isset($result_inventory[0]['cnt']) ? $result_inventory[0]
                 </a>
             </li>
 
- 
-            <?php
-            // Icon mapping for menu names (add more as needed)
-            $icon_map = [
-                // Dashboard & Overview
-    'dashboard' => 'home',
-    'overview cards' => 'layout-dashboard',
-    'total items' => 'list',
-    'allocated' => 'check-circle',
-    'available' => 'circle',
-    'quick charts' => 'donut',
-    'recent stock movement' => 'line-chart',
+        
+                    <?php
+                    // Icon mapping for menu names (add more as needed)
+                    $icon_map = [
+                        // Dashboard & Overview
+                'dashboard' => 'home',
+                'overview cards' => 'layout-dashboard',
+                'total items' => 'list',
+                'allocated' => 'check-circle',
+                'available' => 'circle',
+                'quick charts' => 'donut',
+                'recent stock movement' => 'line-chart',
+                'HR Management' => 'layers',
 
-    // Company Management
-    'company management' => 'building-2',
-    'profile' => 'user-circle',
-    'settings' => 'settings',
+                // Company Management
+                'company management' => 'building-2',
+                'profile' => 'user-circle',
+                'settings' => 'settings',
 
-    // Staff & Accounts
-    'staffs & account' => 'users',
-    'manage staff' => 'user-plus',
-    'manage sub-accounts' => 'users',
-    'manage departments' => 'building',
+                // Staff & Accounts
+                'staffs & account' => 'users',
+                'manage staff' => 'user-plus',
+                'manage sub-accounts' => 'users',
+                'manage departments' => 'building',
 
-    // Inventory
-    'inventory' => 'archive',
-    'item categories' => 'list',
-    'all items' => 'box',
-    'replenish' => 'truck',
-    'restock/ replenish' => 'truck',
-    'damaged items' => 'trash-2',
+                // Inventory
+                'inventory' => 'archive',
+                'item categories' => 'list',
+                'all items' => 'box',
+                'replenish' => 'truck',
+                'restock/ replenish' => 'truck',
+                'damaged items' => 'trash-2',
 
-    // Allocation
-    'allocation' => 'sliders-horizontal',
-    'allocate items' => 'arrow-right-square',
-    'view allocations' => 'eye',
-    'return items' => 'undo-2',
+                // Allocation
+                'allocation' => 'sliders-horizontal',
+                'allocate items' => 'arrow-right-square',
+                'view allocations' => 'eye',
+                'return items' => 'undo-2',
 
-    // Store
-    'store' => 'store',
-    'manage store sections' => 'store',
-    'manage store' => 'store',
+                // Store
+                'store' => 'store',
+                'manage store sections' => 'store',
+                'manage store' => 'store',
 
-    // Reports
-    'reports' => 'file-bar-chart',
-    'allocation reports' => 'file-bar-chart',
-    'stock movement logs' => 'history',
-    'staff usage reports' => 'user-clock',
-    'export csv/pdf' => 'file-output',
+                // Reports
+                'reports' => 'file-bar-chart',
+                'allocation reports' => 'file-bar-chart',
+                'stock movement logs' => 'history',
+                'staff usage reports' => 'user-clock',
+                'export csv/pdf' => 'file-output',
 
-    // Audit Logs
-    'audit logs' => 'file-text',
-    'all user actions' => 'user-search',
-    'inventory logs' => 'clipboard-list',
+                // Audit Logs
+                'audit logs' => 'file-text',
+                'all user actions' => 'user-search',
+                'inventory logs' => 'clipboard-list',
 
-    // Settings
-    'roles & permission' => 'key-round',
-    'change password' => 'lock',
-    'system preferences' => 'sliders-horizontal',
+                // Settings
+                'roles & permission' => 'key-round',
+                'change password' => 'lock',
+                'system preferences' => 'sliders-horizontal',
 
-    // Logout
-    'logout' => 'log-out',
+                // Logout
+                'logout' => 'log-out',
 
-    // Default fallback
-    'default' => 'layers'
-            ]; // <-- CLOSE ARRAY AND ADD SEMICOLON HERE
+                // Default fallback
+                'default' => 'layers'
+                        ]; // <-- CLOSE ARRAY AND ADD SEMICOLON HERE
 
-            function get_icon($name, $icon_map) {
-                $key = strtolower(trim($name));
-                return $icon_map[$key] ?? $icon_map['default'];
-            }
-            ?>
+                function get_icon($name, $icon_map) {
+                    $key = strtolower(trim($name));
+                    return $icon_map[$key] ?? $icon_map['default'];
+                }
+                ?>
+
+            <?php if ($registration_complete = 1) { ?>
 
             <?php foreach ($menu_list as $value): ?>
                 <?php
@@ -305,7 +310,29 @@ $total_new_inventory = isset($result_inventory[0]['cnt']) ? $result_inventory[0]
                     <span class="align-middle">Logout</span>
                 </a>
             </li>
+            <?php } else { ?>
+            <li class="sidebar-item active">
+                <a class="sidebar-link" href="javascript:getpage('complete_onboarding.php','page')">
+                    <i class="align-middle" data-lucide="check-circle"></i>
+                    <span class="align-middle">Complete Onboarding</span>
+                </a>
+            </li>
+             <li class="sidebar-header">Account</li>
+            <li class="sidebar-item">
+                <a class="sidebar-link" href="javascript:getpage('profile.php','page')">
+                    <i class="align-middle" data-lucide="user-circle"></i>
+                    <span class="align-middle">Profile</span>
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a class="sidebar-link" href="logout.php">
+                    <i class="align-middle" data-lucide="log-out"></i>
+                    <span class="align-middle">Logout</span>
+                </a>
+            </li>
+            <?php } ?>
         </ul>
+        
     </div>
 </nav>
 
@@ -348,27 +375,7 @@ $total_new_inventory = isset($result_inventory[0]['cnt']) ? $result_inventory[0]
             <div class="col-auto d-none d-sm-block">
                 <h3>Dashboard</h3>
             </div>
-             <div class="col-auto ms-auto text-end mt-n1">
-                <div class="dropdown me-2 d-inline-block position-relative">
-                    <a class="btn btn-light bg-white shadow-sm dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-display="static">
-                        <i class="align-middle mt-n1" data-lucide="calendar"></i> Today
-                    </a>
-                    <div class="dropdown-menu dropdown-menu-end">
-                        <h6 class="dropdown-header">Settings</h6>
-                        <a class="dropdown-item" href="#">Action</a>
-                        <a class="dropdown-item" href="#">Another action</a>
-                        <a class="dropdown-item" href="#">Something else here</a>
-                        <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="#">Separated link</a>
-                    </div>
-                </div>
-                <button class="btn btn-primary shadow-sm">
-                    <i class="align-middle" data-lucide="filter">&nbsp;</i>
-                </button>
-                <button class="btn btn-primary shadow-sm">
-                    <i class="align-middle" data-lucide="refresh-cw">&nbsp;</i>
-                </button>
-            </div>
+             
         </div>
 
          <!-- Stat Cards -->
@@ -500,23 +507,23 @@ $total_new_inventory = isset($result_inventory[0]['cnt']) ? $result_inventory[0]
 </main>
 <!-- ...rest of your code remains unchanged... -->
 <!-- Custom Modal -->
-<div class="modal fade" id="defaultModalPrimary" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content" id="modal_div">
-            <div class="modal-header">
-                <h5 class="modal-title">Default modal</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body m-3">
-                <p class="mb-0">Use Bootstrap's JavaScript modal plugin to add dialogs to your site for lightboxes, user notifications, or completely custom content.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary">Save changes</button>
+    <div class="modal fade" id="defaultModalPrimary" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content" id="modal_div">
+                <div class="modal-header">
+                    <h5 class="modal-title">Default modal</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body m-3">
+                    <p class="mb-0">Use Bootstrap's JavaScript modal plugin to add dialogs to your site for lightboxes, user notifications, or completely custom content.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary">Save changes</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
 </div>
   
